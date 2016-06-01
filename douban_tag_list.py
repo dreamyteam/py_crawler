@@ -48,7 +48,7 @@ class MyThread (threading.Thread):
 threads = []
 for i in tag_list:
 	#每个标签取100个
-	for j in range(0,8):
+	for j in range(0,20):
 	    print i,j
 	    thread_1 = MyThread(i, 20+j*20)
 	    thread_1.start()

@@ -27,10 +27,11 @@ def proxy_request():
 # data = db.IMDB_ID.find().limit(20)
 
 list1 = [
-			'https://movie.douban.com/subject/1507336/', 
+			'https://movie.douban.com/subject/10437779/', 
 		]
 
 list2 = [	
+			'https://movie.douban.com/subject/10437779/',
 			'https://movie.douban.com/subject/25820460/',
 			'https://movie.douban.com/subject/2131940/',
 			'https://movie.douban.com/subject/1421095/',
@@ -39,7 +40,7 @@ list2 = [
 		]
 
 #一次性数据部分
-for i in list2:
+for i in list1:
 	# print u'电影URL:%s' % i['movie_url']
 	proxy_request()
 	# response = urllib2.urlopen(i['movie_url'])
@@ -53,8 +54,10 @@ for i in list2:
 	info_dict['movie_pic_url'] = sel.xpath('//div[@id="mainpic"]/a/img/@src').extract()[0].strip()
 	print u'影片图片地址:%s' % info_dict['movie_pic_url']
 	#1
-	info_dict['movie_name'] = sel.xpath('//*[@id="content"]/h1/span[1]/text()').extract()[0].strip()
+	info_dict['movie_name'] = sel.xpath('//*[@property="v:itemreviewed"]/text()').extract()[0].strip()
 	print u'影片名称:%s' % info_dict['movie_name']
+	info_dict['movie_time'] = sel.xpath('//*[@class="year"]/text()').extract()[0].strip()
+	print u'影片年份:%s' % info_dict['movie_time']
 	#13
 	is_tags = sel.xpath('//div[@class="tags"]').extract()
 	info_dict['tags'] = list()
@@ -63,7 +66,7 @@ for i in list2:
 		tags_list = list()
 		for j in tags_body:
 			tag = j.xpath('./text()').extract()[0].strip()
-			# print u'标签:%s'  %tag
+			print u'标签:%s'  %tag
 			info_dict['tags'].append(tag)
 
 	# print u'标签列表:%s' % info_dict['tags']
@@ -80,7 +83,7 @@ for i in list2:
 	if is_actor:
 		for ac in is_actor:
 			actor = ac.xpath('./text()').extract()[0].strip()
-			# print u'主演:%s' % actor
+			print u'主演:%s' % actor
 			info_dict['main_actor'].append(actor)
 
 	# print u'主演列表:%s' % info_dict['main_actor']
@@ -106,7 +109,7 @@ for i in list2:
 		
 		for edi in sel.xpath('//div[@id="info"]/span[2]/span[2]/a'):
 			editor = edi.xpath('./text()').extract()[0].strip()
-			# print u'编剧:%s' % editor
+			print u'编剧:%s' % editor
 			info_dict['editor'].append(editor)
 	# print u'编剧列表:%s' % info_dict['editor']
 
@@ -116,7 +119,7 @@ for i in list2:
 	if is_type:
 		for t in is_type:
 			type_type = t.xpath('./text()').extract()[0].strip()
-			# print u'类型:%s' % type_type
+			print u'类型:%s' % type_type
 			info_dict['type_type'].append(type_type) 
 	# print u'类型列表:%s' % info_dict['type_type']
 
@@ -128,7 +131,7 @@ for i in list2:
 		for rt in is_time:
 			release_time = rt.xpath('./text()').extract()[0].strip()
 			info_dict['release_time_area'].append(release_time)
-			# print u'上映时间:%s' % release_time
+			print u'上映时间:%s' % release_time
 
 	# print u'上映时间和地区列表:%s' % info_dict['release_time_area']
 
@@ -146,13 +149,13 @@ for i in list2:
 	info_dict['img_url'] = img_url
 	print u'图片链接:%s' % img_url
 	info_dict['img_data'] = img_data
-	
-
-
-# def left_info():
-# 	pass
-
 	print '----------' * 8
+
+
+def check_cn_en():
+	pass
+
+	
 
 
 

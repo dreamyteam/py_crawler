@@ -15,14 +15,12 @@ from scrapy.selector import Selector
 import time
 # def subject_search(end_num):
 # start_time = time.time()
-for i in range(364,500):
-
+for i in range(803300,804300):
 	proxy = urllib2.ProxyHandler(random.choice(proxy_list))
 	opener = urllib2.build_opener(proxy)
 	urllib2.install_opener(opener)
-	# response = urllib2.urlopen('https://movie.douban.com/subject_search?search_text=+tt%07d&cat=1002' % i)
-	response = urllib2.urlopen('https://movie.douban.com/subject_search?search_text=+tt0002013&cat=1002')
-	
+	response = urllib2.urlopen('https://movie.douban.com/subject_search?search_text=+tt%07d&cat=1002' % i)
+	# response = urllib2.urlopen('https://movie.douban.com/subject_search?search_text=+tt%07d&cat=1002')
 	# print u'URL路径:%s' % response.url
 	data = response.read()
 	info = Selector(text=data).xpath('//div[@class="pl2"]/a/text()')
@@ -37,15 +35,7 @@ for i in range(364,500):
 		IMDB_id['ttid'] = ttid
 		IMDB_id['title'] = title
 		IMDB_id['movie_url'] = movie_url
-	else:
-		print u'--------什么都没有---------'
-
-
-	break
-		# db.IMDB_ID.update({'_id': ttid}, {'$set': IMDB_id}, True)
-
-	# else:
-
+		db.IMDB_ID.update({'_id': ttid}, {'$set': IMDB_id}, True)
 	# 	print u'豆瓣不存在的电影:%s' % response.url
 
 # print u'用时:%s' % (time.time() - start_time)

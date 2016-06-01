@@ -41,6 +41,7 @@ staff_list = {
 				'Cinematography': u'摄影 Cinematography', 
 				'Film_Edinting': u'剪辑 Film Editing', 
 				'Original_Music': u'原创音乐 Original Music', 
+				'Visual_Effects_Supervisor': u'视觉特效 Visual Effects Supervisor',
 				'Art_Direction_by': u'美术设计 Art Direction by', 
 				'Assistant_Director': u'副导演/助理导演 Assistant Director', 
 				'Sound_Department': u'声音部门 Sound Department', 
@@ -55,7 +56,20 @@ company_list = {
 				'sale_company': u'发行公司'
 			}
 
-
-
+#IMDB演职人员标签
+IMDB_staff_list = {
+					'Director': 'Directed by', 
+					'Writer': 'Writing Credits', 
+					'Produced_by': 'Produced by', 
+					'Cinematography': 'Cinematography by', 
+					'Film_Edinting': 'Film Editing by', 
+					'Original_Music': 'Music by', 
+					'Visual_Effects_Supervisor': 'Visual Effects by',
+					'Art_Direction_by': 'Art Direction by', 
+					'Assistant_Director': 'Second Unit Director or Assistant Director', 
+					'Sound_Department': 'Sound Department', 
+					'Makeup_Department': 'Makeup Department', 
+					'Choreographer': 'Stunts', 
+				}
 
 
