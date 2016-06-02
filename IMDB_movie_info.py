@@ -53,11 +53,14 @@ def imdb_info(ttid):
 	print u'IMDB编号:%s' % ttid
 	#演职员信息
 	cast_info(ttid)
-	#简介
+	#简介/类型风格
 	storyline = sel.xpath('//*[@id="titleStoryLine"]/h2/text()')
 	if storyline:
 		description = sel.xpath('//*[@id="titleStoryLine"]//*[@itemprop="description"]/p/text()').extract()[0].strip()
 		print u'简介:%s' % description
+
+	if sel.xpath('//*[@itemprop="genre"]'):
+		pass
 
 
 #判断对白语言/片长/
