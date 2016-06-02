@@ -18,23 +18,7 @@ from scrapy.selector import Selector
 from config_constant import *
 import bson
 import time
-data = db.DoubanTagID.find().limit(100)
-
-# list1 = [
-# 			'https://movie.douban.com/subject/2131940/', 
-# 		]
-
-# list2 = [	
-# 			'https://movie.douban.com/subject/10437779/',
-# 			'https://movie.douban.com/subject/25820460/',
-# 			'https://movie.douban.com/subject/2131940/',
-# 			'https://movie.douban.com/subject/1421095/',
-# 			'https://movie.douban.com/subject/26366465/',
-# 			'https://movie.douban.com/subject/5205593/',
-# 			'https://movie.douban.com/subject/1432146/',
-# 			'https://movie.douban.com/subject/1794171/',
-# 			'https://movie.douban.com/subject/1291843/',
-# 		]
+data = db.DoubanTagID.find().skip(1100).limit(100)
 
 request_list = ['proxy', 'no']
 
@@ -62,7 +46,11 @@ def base_info(sel, url):
 	info_dict['movie_url'] = url
 	print u'电影URL:**%s' % info_dict['movie_url']
 	#0 图片直接存入图片链接和将二进制流存入mongodb
-	info_dict['img_url'] = sel.xpath('//div[@id="mainpic"]/a/img/@src').extract()[0].strip()
+	try:
+		info_dict['img_url'] = sel.xpath('//div[@id="mainpic"]/a/img/@src').extract()[0].strip()
+	except Exception, e:
+		return 'pass'
+	# info_dict['img_url'] = sel.xpath('//div[@id="mainpic"]/a/img/@src').extract()[0].strip()
 	# print u'影片图片地址:***%s' % info_dict['img_url']
 
 	info_dict['img_data'] = bson.Binary(urllib2.urlopen(info_dict['img_url']).read())
@@ -173,14 +161,16 @@ def base_info(sel, url):
 
 	#7IMDB编号 可能没有ttid
 	imdb_info = sel.xpath('//div[@id="info"]//*[@rel="nofollow"]')
+	is_exist = ''
 	if imdb_info:
 		for imdb in imdb_info:
 			is_imdb = imdb.xpath('./text()').extract()[0].strip()
 			if ('tt' in is_imdb) and (len(is_imdb) == 9):
-				info_dict['IMDB_ID'] = is_imdb
+				is_exist = is_imdb
+		info_dict['IMDB_ID'] = is_exist
 	else:
 
-		info_dict['IMDB_ID'] = ''
+		info_dict['IMDB_ID'] = is_exist
 
 	print u'IMDB_编号:%s' % info_dict['IMDB_ID']
 			
@@ -256,7 +246,10 @@ def return_info(url):
 	sel = Selector(text=html_data)
 
 	dict_1 = base_info(sel, url)
-	dict_2 = update_info(sel, url)
+	if dict_1 != 'pass':
+		dict_2 = update_info(sel, url)
+	else:
+		return 'pass'
 
 	return (dict_1, dict_2)
 
@@ -265,10 +258,13 @@ def run(data):
 	for i in data:
 		time.sleep(random.random())
 		save_data = return_info(i['url'])
+		if save_data == 'pass':
+			pass
+		else:
 		# print save_data[0]
 		# print save_data[1]
-		save_data[0].update(save_data[1])
-		db.MovieInfoData.update({'_id': save_data[0]['movie_id']}, {'$set': save_data[0]}, True)
+			save_data[0].update(save_data[1])
+			db.MovieInfoData.update({'_id': save_data[0]['movie_id']}, {'$set': save_data[0]}, True)
 
 run(data)
 

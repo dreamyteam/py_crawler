@@ -4,6 +4,9 @@ import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
+
+
+
 # #代理池
 # proxy_list = [
 #                 {'http': '45.79.102.12:8887'},
@@ -58,18 +61,19 @@ company_list = {
 
 #IMDB演职人员标签
 IMDB_staff_list = {
-					'Director': 'Directed by', 
-					'Writer': 'Writing Credits', 
-					'Produced_by': 'Produced by', 
+					'director': 'Directed by', 
+					'editor': 'Writing Credits', 
+					'produced_by': 'Produced by', 
 					'Cinematography': 'Cinematography by', 
-					'Film_Edinting': 'Film Editing by', 
-					'Original_Music': 'Music by', 
+					'film_editing': 'Film Editing by', 
+					'music': 'Music by', 
 					'Visual_Effects_Supervisor': 'Visual Effects by',
-					'Art_Direction_by': 'Art Direction by', 
+					'art_design': 'Art Direction by', 
 					'Assistant_Director': 'Second Unit Director or Assistant Director', 
 					'Sound_Department': 'Sound Department', 
 					'Makeup_Department': 'Makeup Department', 
 					'Choreographer': 'Stunts', 
+					'cloth_design': 'Costume Design by',
 				}
 
 
