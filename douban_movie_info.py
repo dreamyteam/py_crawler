@@ -18,7 +18,7 @@ from scrapy.selector import Selector
 from config_constant import *
 import bson
 import time
-data = db.DoubanTagID.find().skip(1100).limit(100)
+data = db.DoubanTagID.find().skip(2100)
 
 request_list = ['proxy', 'no']
 
@@ -264,6 +264,7 @@ def run(data):
 		# print save_data[0]
 		# print save_data[1]
 			save_data[0].update(save_data[1])
+			save_data[0]['source'] = 'douban'
 			db.MovieInfoData.update({'_id': save_data[0]['movie_id']}, {'$set': save_data[0]}, True)
 
 run(data)

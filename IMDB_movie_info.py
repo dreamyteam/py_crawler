@@ -5,7 +5,7 @@ import random
 from scrapy.selector import Selector
 from config_constant import *
 import bson
-
+import re
 
 import pymongo
 client = pymongo.MongoClient('112.74.106.159', 27017)
@@ -36,66 +36,67 @@ def return_info(ttid):
 		html_data = no_proxy(url)
 	sel = Selector(text=html_data)
 
-	
 
 
 
+def imdb_info(ttid, relate_id):
 
-ttid_list = [
-				'tt2625030',
-				'tt3381008',
-				'tt2948356',
-				'tt2404233',
-				'tt4417522',
-			]
-
-
-
-def imdb_info(ttid):
 	response = urllib2.urlopen('http://www.imdb.com/title/{0}/'.format(ttid,))
-	print u'当前的URL:%s' % response.url
+	movie_url = response.url
+	print u'当前的URL:%s' % movie_url
 	data = response.read()
 	sel = Selector(text=data)
 
 	info_dict = dict()
 
-	#0图片
-	info_dict['img_url'] = sel.xpath('//*[@class="poster"]//*[@itemprop="image"]/@src').extract()[0].strip()
-	print u'图片链接:%s' % info_dict['img_url']
-	img_response = urllib2.urlopen(info_dict['img_url']).read()
-	info_dict['img_data'] = bson.Binary(img_response) #影片图片数据
 
+	info_dict['Relate_ID'] = relate_id
+	info_dict['source'] = 'IMDB'
+	info_dict['movie_url'] = movie_url
+	info_dict['movie_id'] = ttid
+	#0图片
+	if sel.xpath('//*[@class="poster"]//*[@itemprop="image"]/@src').extract():
+		info_dict['img_url'] = sel.xpath('//*[@class="poster"]//*[@itemprop="image"]/@src').extract()[0].strip()
+		print u'图片链接:%s' % info_dict['img_url']
+		img_response = urllib2.urlopen(info_dict['img_url']).read()
+		info_dict['img_data'] = bson.Binary(img_response) #影片图片数据
+	else:
+		info_dict['img_url'] = ''
+		info_dict['img_data'] = ''
 	#1影片名称 2外文名称
 	info_dict['movie_name'] = sel.xpath('//*[@class="title_wrapper"]//*[@itemprop="name"]/text()').extract()[0].strip()
 	print u'影片名称:%s' % info_dict['movie_name']
 	info_dict['foreign_name'] = info_dict['movie_name']
 	#3语言 4片长
 	info_dict.update(get_info(sel))
-	for i in info_dict['language']:
-		print u'语言:%s' % i
-	print u'片长:%s' % info_dict['runtime']
+	# # for i in info_dict['language']:
+	# # 	print u'语言:%s' % i
+	# print u'片长:%s' % info_dict['runtime']
 
-	# 上映时间和别名
+	# # 上映时间和别名
 	info_dict.update(release_info(ttid))
-	for i in info_dict['release_info']:
-		print i[0], '\t', i[1]
-	for i in info_dict['other_name']:
-		print u'别名:%s' % i
-	#制作公司和发行公司
+	# # for i in info_dict['release_info']:
+	# # 	print i[0], '\t', i[1]
+	# # for i in info_dict['other_name']:
+	# 	# print u'别名:%s' % i
+	# #制作公司和发行公司
 	info_dict.update(company_info(ttid))
-	#IMDB编号
+	# #IMDB编号
 	info_dict['IMDB_ID'] = ttid
-	print u'IMDB编号:%s' % info_dict['IMDB_ID']
-	#演职员信息
+	# print u'IMDB编号:%s' % info_dict['IMDB_ID']
+	# #演职员信息
 	info_dict.update(cast_info(ttid))
 
-	#简介/类型风格
+	# #简介/类型风格
 	storyline = sel.xpath('//*[@id="titleStoryLine"]/h2/text()')
 	info_dict['introduce'] = list()
 	if storyline:
-		description = sel.xpath('//*[@id="titleStoryLine"]//*[@itemprop="description"]/p/text()').extract()[0].strip()
-		print u'简介:%s' % description
-		print '\n'
+		if sel.xpath('//*[@id="titleStoryLine"]//*[@itemprop="description"]/p/text()').extract():
+			description = sel.xpath('//*[@id="titleStoryLine"]//*[@itemprop="description"]/p/text()').extract()[0].strip()
+		else:
+			description = ''
+		# print u'简介:%s' % description
+		# print '\n'
 		info_dict['introduce'].append(description)
 	info_dict['film_type'] = list()
 	if sel.xpath('//*[@itemprop="genre"]/text()').extract():
@@ -103,7 +104,12 @@ def imdb_info(ttid):
 			is_type = i.xpath('./text()').extract()[0].strip()
 			if is_type:
 				info_dict['film_type'].append(is_type)
-				print is_type
+				# print is_type
+	#更新信息
+	info_dict.update(update_info(ttid, sel))
+	# print info_dict
+
+	db.MovieInfo.update({'movie_url': info_dict['movie_url']}, {'$set': info_dict}, True)
 
 #判断对白语言/片长/
 def get_info(sel):
@@ -158,7 +164,6 @@ def release_info(ttid):
 	info_dict['release_info'] = release_list
 	info_dict['other_name'] = othername_list
 	return info_dict
-
 
 #制作公司和发行公司
 def company_info(ttid):
@@ -244,8 +249,11 @@ def cast_info(ttid):
 							}
 				# print u'演员:%s' % actor
 				character = ''
-				if i.xpath('.//*[@class="character"]/div'):
-					character = i.xpath('.//*[@class="character"]/div/text()').extract()[0].strip()
+				if i.xpath('.//*[@class="character"]'):
+					if i.xpath('.//*[@class="character"]/div/a'):
+						character = i.xpath('.//*[@class="character"]/div/a/text()').extract()[0].strip()
+					elif i.xpath('.//*[@class="character"]/div'):
+						character = i.xpath('.//*[@class="character"]/div/text()').extract()[0].strip()
 					# print u'角色:%s' % character
 				actor_charactor.append([actor_dict, character])
 	update_dict['actor_charactor'] = actor_charactor
@@ -253,10 +261,10 @@ def cast_info(ttid):
 	return update_dict
 
 # #更新部分
-def update_info(ttid):
+def update_info(ttid, sel2):
+	update_dict = dict()
 	#获奖提名记录
 	url = 'http://www.imdb.com/title/{0}/awards'.format(ttid,)
-	print url
 	sel = Selector(text=urllib2.urlopen(url).read())
 	award_times = 0
 	nominate_times = 0
@@ -271,7 +279,10 @@ def update_info(ttid):
 				nominate_times = int(r[r.index('nominations')-1])
 			except Exception, e:
 				nominate_times = int(r[r.index('nomination')-1])
-	print u'{0}****{1}'.format(award_times, nominate_times)
+	update_dict['wins'] = award_times
+	update_dict['nominations'] = nominate_times
+	# print u'{0}****{1}'.format(award_times, nominate_times)
+
 	#信息
 	all_award_body = sel.xpath('//*[@class="article listo"]/h3')
 	all_info = sel.xpath('//*[@class="article listo"]/table')
@@ -282,7 +293,9 @@ def update_info(ttid):
 						'award_body': '',
 						'award_category': '',
 						'Won': [],
-						'Nominated': []
+						'Nominated': [],
+						'2nd place': [],
+						'3rd place': [],
 					}
 		won_list = list()
 		nomination_list = list()
@@ -291,45 +304,131 @@ def update_info(ttid):
 		format_dict['award_body'] = sel.xpath('//*[@class="article listo"]/h3[{0}]/text()'.format(i,)).extract()[0].strip()
 		# print u'机构:%s' % format_dict['award_body']
 		
-		for j in sel.xpath('//*[@class="article listo"]/table[{0}]/tr'.format(i,)):
-			is_len = j.xpath('.//*[@class="title_award_outcome"]')
-			print u'获奖和提名:%s' % is_len
-			# if len(is_len) == 1:
-			# 	add_name = j.xpath('.//*[@class="title_award_outcome"]//*[@class="award_category"]/text()').extract()[0].strip()
-			# 	format_dict['award_category'] = add_name
+		# for j in sel.xpath('//*[@class="article listo"]/table[{0}]/tr'.format(i,)):
+		# 	is_len = j.xpath('.//*[@class="title_award_outcome"]')
+		# 	print u'获奖和提名:%s' % is_len
+		is_len = sel.xpath('//*[@class="article listo"]/table[{0}]//*[@class="title_award_outcome"]'.format(i,))
+		
+		if len(is_len) == 1:
+
+			add_name = sel.xpath('//*[@class="article listo"]/table[{0}]//*[@class="title_award_outcome"]/span/text()'.format(i,)).extract()[0].strip()
+			format_dict['award_category'] = add_name
+			# print add_name
+			#提名还是获奖
+			is_which = sel.xpath('//*[@class="article listo"]/table[{0}]//*[@class="title_award_outcome"]/b/text()'.format(i,)).extract()[0].strip()
+			# print is_which
+			for j in sel.xpath('//*[@class="article listo"]/table[{0}]//*[@class="award_description"]'.format(i,)):
+			
+				name = j.xpath('./text()').extract()[0].strip()
+				name_actor_list = j.xpath('./a')
+
+				name_actor = list()
+				if name_actor_list:
+					for z in name_actor_list:
+						name_actor.append(z.xpath('./text()').extract()[0].strip())
 				
-			# 	for z in j.xpath('.//*[@class="award_description"]'):
-			# 		name = z.xpath('./text()').extract[0].strip()
-			# 		name_actor = z.xpath('./a/text()').extract()
-			# 		if name_actor:
-			# 			name_actor = name_actor[0].strip()
-			# 		else:
-			# 			name_actor = ''
-			# 		insert_dict = {
-			# 						'award_name': name,
-			# 						'name_actor': name_actor,
-			# 					}
-			# 		format_dict[add_name].append(insert_dict)
+				insert_dict = {
+								'award_name': name,
+								'name_actor': name_actor,
+							}
+				# print u'提名还是获奖:%s' % is_which
+				# print u'奖项:%s' % name
+				# print u'获奖者:%s' % name_actor
+				format_dict[is_which].append(insert_dict)
 
-			# elif len(is_len) == 2:
-			# 	# print u'有执行么'
-			# 	rowspan_list = list()
-			# 	for x in sel.xpath('.//*[@class="title_award_outcome"]'):
-			# 		rowspan_list.append(x.xpath('./@rowspan').extract()[0].strip())
-			# 	print u'列表各自的奖项数目与:%s' %rowspan_list	
+		elif len(is_len) == 2:
+			# print u'有执行么'
+			format_dict['award_category'] = sel.xpath('//*[@class="article listo"]/table[{0}]//*[@class="award_category"]/text()'.format(i,)).extract()[0].strip()
+
+			rowspan_list = list()
+			for j in sel.xpath('//*[@class="article listo"]/table[{0}]//*[@class="title_award_outcome"]'.format(i,)):
+				rowspan_list.append(j.xpath('./@rowspan').extract()[0].strip())
+
+			# print u'列表各自的奖项数目与:%s' % rowspan_list	
+			is_which1 = sel.xpath('//*[@class="article listo"]/table[{0}]//*[@class="title_award_outcome"][1]/b/text()'.format(i,)).extract()[0].strip()
+			# print is_which1
+			is_which2 = sel.xpath('//*[@class="article listo"]/table[{0}]//*[@class="title_award_outcome"][2]/b/text()'.format(i,)).extract()[0].strip()
+			# print is_which2
+			#第一项
+			for x in range(1, int(rowspan_list[0]) + 1):
+
+				name = sel.xpath('//*[@class="article listo"]/table[{0}]//*[@class="award_description"][{1}]/text()'.format(i, x)).extract()[0].strip()
+				# print u'第一项名称:%s' % name
+				name_actor_list = sel.xpath('//*[@class="article listo"]/table[{0}]//*[@class="award_description"][{1}]/a'.format(i, x))
+				name_actor = list()
+				if name_actor_list:
+					for y in name_actor_list:
+						name_actor.append(y.xpath('./text()').extract()[0].strip())
+
+					insert_dict = {
+									'award_times': name,
+									'name_actor': name_actor
+								}
+					format_dict[is_which1].append(insert_dict)	
 
 
+			#第二项
+			for x in range(int(rowspan_list[0]) + 1, int(rowspan_list[0]) + 1 + int(rowspan_list[1])):
+				name = sel.xpath('//*[@class="article listo"]/table[{0}]//*[@class="award_description"][{1}]/text()'.format(i, x)).extract()[0].strip()
+				# print u'第二项名称:%s' % name
+				name_actor_list = sel.xpath('//*[@class="article listo"]/table[{0}]//*[@class="award_description"][{1}]/a'.format(i, x))
+				name_actor = list()
+				if name_actor_list:
+					for y in name_actor_list:
+						name_actor.append(y.xpath('./text()').extract()[0].strip())
+					insert_dict = {
+									'award_times': name,
+									'name_actor': name_actor
+								}
+					format_dict[is_which2].append(insert_dict)
+		award_nominate.append(format_dict)
+	update_dict['award_nominate'] = award_nominate
 
+	average = sel2.xpath('//*[@itemprop="ratingValue"]/text()').extract()[0].strip()
+	# print u'IMDB评分:%s' % average
+	update_dict['average'] = average
+	votes = sel2.xpath('//*[@itemprop="ratingCount"]/text()').extract()[0].strip()
+	
+	p = re.compile("\d+,\d+?")
+	for com in p.finditer(votes):
+		mm = com.group()
+		votes = int(votes.replace(mm, mm.replace(",", "")))
+	update_dict['votes'] = votes
+	# print u'人数:%s' % votes
+	all_long = sel2.xpath('//*[@href="externalreviews?ref_=tt_ov_rt"]/text()').extract()
+	# print all_long
+	if all_long:
+		# print u'执行了？'
+		all_long = all_long[0].strip()
+	else:
+		all_long = 0
+	# print u'长评人数:%s' % all_long
+	
 
-update_info('tt1300854')
+	update_dict['all_long'] = all_long
+	rank_list = sel2.xpath('//*[@class="titleReviewBarSubItem"]')
+	rank = 0
+	if rank_list:
+		for i in rank_list:
+			if i.xpath('./div/text()').extract():
+				if i.xpath('./div/text()').extract()[0].strip() == 'Popularity':
+					rank = i.xpath('.//*[@class="subText"]/text()').extract()[0].strip('(').strip()
+					p = re.compile("\d+,\d+?")
+					for com in p.finditer(rank):
+						mm = com.group()
+						rank = int(rank.replace(mm, mm.replace(",", "")))
+					# print u'排名:%s' % rank
 
-# for i in ttid_list:
-# 	update_info(i)
-# 	# break
-# # 	imdb_info(i)
-# 	print '-------'*8
-# 	break
+	update_dict['rank'] = rank
+	update_dict['all_short'] = 0
+	return update_dict
 
+get_douban_info = db.MovieInfo.find({'source': 'douban'}).limit(10)
+
+for i in get_douban_info:
+	if i['IMDB_ID']:
+		imdb_info(i['IMDB_ID'], i['Relate_ID'])
+	print '-------' * 5
 
 
 
