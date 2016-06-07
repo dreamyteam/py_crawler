@@ -2,16 +2,7 @@
 
 import urllib2
 import json
-import time
 import re
-
-from scrapy.selector import Selector
-
-# import pymongo
-# client = pymongo.MongoClient('112.74.106.159', 27017)
-# db = client.MovieData
-
-# get_info = db.MovieInfo.find().skip(15).limit(10)
 
 def search_movie(search_name, movie_time):
 	# search_name = "叶问"
@@ -72,21 +63,20 @@ def time_id(movie_dict):
 			print u'第二次检索关键词:%s' % new_search_word
 			result_second = search_movie(new_search_word.encode('utf-8'), movie_dict['movie_time'])
 			print u'第二次返回的时光网ID:%s' % result_second
-			return result_second
+			if result_second == 'nomatch':
+				return 'nofind'
+				print '检索不到，我去，居然没找到'
+			else:
+				return result_second
 
 		else:
-			print u'暂时从时光网搜索不到或者是我太菜没检索到，改进检索' 
+			print u'暂时从时光网搜索不到或者是我太菜没检索到，改进检索算法' 
 			return 'nofind'
 	else:
 		print u'第一次返回的时光网ID:%s' % result_first
 		return result_first
 
-	
 
-# for i in get_info:
-# 	time_id(i)
-# 	print '---------' * 5
-	# break
 
 
 

@@ -7,47 +7,15 @@ from scrapy.selector import Selector
 
 client = pymongo.MongoClient('112.74.106.159', 27017)
 db = client.MovieData
-get_info = db.MovieInfo.find().skip(15).limit(20)
+get_info = db.MovieInfo.find().skip(0).limit(500)
 
 from config_constant import *
 from get_time_id import *
+import re
+import json
+import time
 
-def proxy_request():
-	proxy = urllib2.ProxyHandler(random.choice(proxy_list))
-	opener = urllib2.build_opener(proxy)
-	urllib2.install_opener(opener)
-def search_name(name):
-	
-	response = urllib2.urlopen('http://search.mtime.com/search/?q=%E5%8D%A1%E9%97%A8%E8%A5%BF%E5%A1%94')
-	return response.read()
 
-# data  = search_name('Le Clown et ses chiens')
-# print Selector(text=data).xpath('//*[@id="moreRegion"]/li[1]/h3/a/text()').extract()
-# get_info = db.IMDB_ID.find().limit(10)
-# search_name_list = [i['title'] for i in get_info]
-# for j in search_name_list:
-# 	pass
-# 	# proxy_request()
-# 	# data = search_name(j)
-# 	# f = open('/Users/mac/Desktop/testhtml/%s.html' % j, 'w')
-# 	# f.write(data)
-# 	# f.close()
-# 	# print u'查询的电影:%s' % j
-
-# 	break
-single_test = [
-				'http://movie.mtime.com/11925/',
-			]
-movie_url_list = [
-					'http://movie.mtime.com/196613/',
-					'http://movie.mtime.com/164011/',
-					'http://movie.mtime.com/11925/',
-					'http://movie.mtime.com/216573/',
-					'http://movie.mtime.com/209122/',
-					'http://movie.mtime.com/134727/',
-					'http://movie.mtime.com/134720/',
-					'http://movie.mtime.com/134729/',
-				]
 #判断制作国家和地区
 def select_contry(para_list):
 	if u'国家地区：' in para_list:
@@ -70,13 +38,19 @@ def staff_info(sel4,staff_list_info, selector_list_info):
 		new_info_list = list()
 		if staff_list[i] in selector_list_info:
 			index_info = selector_list_info.index(staff_list[i]) + 1
+
 			for j in sel4.xpath('//*[@class="credits_r"]/div[{0}]/p'.format(index_info,)):
-				people_info = j.xpath('./a/text()').extract()[0].strip()
+				
+				people_info = j.xpath('./a/text()').extract()
+				if people_info:
+					people_info = people_info[0].strip()
+				else:
+					people_info = str()
 				people_url = j.xpath('./a/@href').extract()
 				if people_url:
 					people_url = people_url[0].strip()
 				else:
-					people_url = ''
+					people_url = str()
 				insert_dict = {
 								'name': people_info,
 								'url': people_url,
@@ -104,7 +78,7 @@ def company_type(sel2):
 									'name': company_name,
 									'url': company_url,
 								}
-					print u'公司:%s' % company_name
+					# print u'公司:%s' % company_name
 					company_list.append(product_dict)
 
 			if sel2.xpath('//*[@id="companyRegion"]/dd/div[1]/div[1]/h4/text()').extract()[0].strip() == u'制作公司':
@@ -117,7 +91,7 @@ def company_type(sel2):
 							sale_company_url = i.xpath('./a/@href').extract()[0].strip()
 						else:
 							sale_company_url = ''
-						print u'发行公司:%s' % sale_company_name
+						# print u'发行公司:%s' % sale_company_name
 						sale_dict = {
 										'name': sale_company_name,
 										'url': sale_company_url,
@@ -131,9 +105,9 @@ def company_type(sel2):
 
 #影片基本信息
 import bson
-def movie_info(url, relate_id):
+def movie_info(url, relate_id, time_get_id, imdb_id):
 
-	time_movie_info = dict()
+	time_movie_info = data_formate()
 	time_movie_info['Relate_ID'] = relate_id
 	print u'三表关联的ID:%s' % time_movie_info['Relate_ID']
 	time_movie_info['movie_url'] = url
@@ -145,7 +119,7 @@ def movie_info(url, relate_id):
 	response4 = urllib2.urlopen(url + 'fullcredits.html') #演职人员
 	response5 = urllib2.urlopen(url + 'awards.html') #获奖记录
 	print u'更多资料URL:%s' % response.url
-	print u'获奖记录URL:%s' % response5.url
+	# print u'获奖记录URL:%s' % response5.url
 	data = response.read()
 	data2 = response2.read()
 	data3 = response3.read()
@@ -179,7 +153,7 @@ def movie_info(url, relate_id):
 	#3/5电影片长和别名
 	is_exist = sel2.xpath('//*[@class="pb12"]')
 	time_movie_info['other_name'] = list()
-	time_movie_info['movie_time_long'] = ''
+	time_movie_info['runtime'] = ''
 	if is_exist:
 		if len(is_exist) == 1:
 			movie_time_long = is_exist[0].xpath('./p/text()').extract()[0].strip()
@@ -208,7 +182,7 @@ def movie_info(url, relate_id):
 			time_movie_info['film_type'].append(movie_type)
 	# print u'影片类型列表:%s' % time_movie_info['film_type']
 	#7/8 简介和IMDB编号
-	time_movie_info['IMDB_ID'] = ''
+	time_movie_info['IMDB_ID'] = imdb_id
 	time_movie_info['introduce'] = list()
 	is_introduce = sel3.xpath('//*[@class="plots_box"]')
 	if is_introduce:
@@ -222,7 +196,6 @@ def movie_info(url, relate_id):
 
 	#10 制作国家/地区	
 	is_info_l = sel.xpath('//*[@pan="M14_Movie_Overview_BaseInfo"]')
-	time_movie_info['area'] = ''
 	para_list = list()
 	if is_info_l:
 		for i in is_info_l:
@@ -319,11 +292,16 @@ def movie_info(url, relate_id):
 		time_movie_info['award_nominate'] = list()
 
 	else:
+		time_movie_info.update(awards_record(sel5))
 
-		awards_record(sel5)
+	#其余更新部分
+	time_movie_info.update(update_other_info(time_get_id))
+	db.TimeTestData.update({'movie_url': url}, {'$set': time_movie_info}, True)
 
+#获奖和提名记录还有次数属于更新
 def awards_record(sel5):
-	print u'奖项种类:%s' % len(sel5.xpath('//*[@id="awardInfo_data"]/dd'))
+	# print u'奖项种类:%s' % len(sel5.xpath('//*[@id="awardInfo_data"]/dd'))
+	update_dict = dict()
 	won_times_list = list()
 	nominated_times_list = list()
 	award_nominate = list()
@@ -342,10 +320,9 @@ def awards_record(sel5):
 		both_name = i.xpath('./h3/b/text()').extract()[0].strip()
 		format_dict['award_body'] = both_name
 		format_dict['award_category'] = both_name
-		print u'奖项名称:%s' % format_dict['award_category']
-
+		# print u'奖项名称:%s' % format_dict['award_category']
+		#只得过一届的信息处理
 		if i.xpath('.//*[@class="mr15"]/a/text()').extract():
-			#只得过一届的信息处理
 			format_dict['date'] = i.xpath('.//*[@class="mr15"]/a/text()').extract()[0].strip()
 			#提名获奖都有
 			if  len(i.xpath('./h3/text()').extract()) == 5:
@@ -368,6 +345,7 @@ def awards_record(sel5):
 					for na in i.xpath('./dl/dd[{0}]/a'.format(dd)):
 						# print u'获奖者:%s' % na.xpath('./text()').extract()[0].strip()
 						insert_dict['name_actor'].append(na.xpath('./text()').extract()[0].strip())
+					# print u'演员列表是否有:%s' % insert_dict['name_actor']
 					format_dict['Won'].append(insert_dict)
 
 				for dd1 in range(won_times + 1, won_times + 1 + nominated_times):
@@ -387,44 +365,133 @@ def awards_record(sel5):
 									'name_actor': [],
 							}
 				times = int(i.xpath('./h3/strong/text()').extract()[0].strip())
-				print u'次数:%s' % times
-				is_which = i.xpath('./dl/dt/text()').extract()[0].strip()
-				if is_which == u'获奖':
-					won_times_list.append(times)
-				else:
-					nominated_times_list.append(times)
+				# print u'次数:%s' % times
 
 				for dd2 in i.xpath('./dl/dd'):
-					insert_dict['award_name'] = dd2.xpath('./span/text()').extract()[0].strip()
-					print u'种类:%s' % insert_dict['award_name']
+					is_award_name = dd2.xpath('./span/text()').extract()
+					if is_award_name:
+						insert_dict['award_name'] = dd2.xpath('./span/text()').extract()[0].strip()
+					else:
+						insert_dict['award_name'] = str()
+
+					# print u'种类:%s' % insert_dict['award_name']
 					for ba in dd2.xpath('./a'):
-						print u'人:%s' % ba.xpath('./text()').extract()[0].strip()
+						# print u'人:%s' % ba.xpath('./text()').extract()[0].strip()
 						insert_dict['name_actor'].append(ba.xpath('./text()').extract()[0].strip())
+				is_which = i.xpath('./dl/dt/text()').extract()[0].strip()
 
+				if is_which == u'获奖':
+					won_times_list.append(times)
+					format_dict['Won'].append(insert_dict)
+				else:
+					nominated_times_list.append(times)
+					format_dict['Nominated'].append(insert_dict)
+				# print u'获奖还是提名:%s' % is_which
+
+		#获得过多届
 		else:
-			format_dict['date'] = ''
+			#历届获奖或者提名次数
+			many_list = [t.xpath('./text()').extract()[0].strip() for t in i.xpath('./h3/strong')]
+			if len(many_list) == 2:
+				won_times_list.append(int(many_list[0]))
+				# print u'获奖次数:%s' % many_list[0]
+				nominated_times_list.append(int(many_list[1]))
+				# print u'提名次数:%s' % many_list[1]
 
-		print u'哪一届:%s' % format_dict['date']
+			else:
+				for l in i.xpath('./h3/text()').extract():
+					if '\t' not in l:
+						if l == u' 获奖：':
+							won_times_list.append(int(i.xpath('./h3/strong/text()').extract()[0].strip()))
+						else:
+							nominated_times_list.append(int(i.xpath('./h3/strong/text()').extract()[0].strip()))
+			#历届信息(具体信息的获取)
+			for each in i.xpath('./dl//*[@style="font-size: 20px;"]'):
+				format_dict = dict()
+				format_dict['2nd place'] = list()
+				format_dict['3rd place'] = list()
+				format_dict['Won'] = list()
+				format_dict['Nominated'] = list()
+				format_dict['award_body'] = both_name
+				format_dict['award_category'] = both_name
+				# print u'多届的奖项种类:%s' % format_dict['award_body']
+				format_dict['date'] = each.xpath('./a/text()').extract()[0].strip()
+				# print u'多届的中的哪一届:*****%s' % format_dict['date']
 
+		# print u'哪一届:%s' % format_dict['date']
 		award_nominate.append(format_dict)
 
+	update_dict['nominations'] = sum(nominated_times_list)
+	update_dict['wins'] = sum(won_times_list)
+	update_dict['award_nominate'] = award_nominate
+	return update_dict
 
-
-#时光网内测
-movie_info('http://movie.mtime.com/11925/', '123')
+#其余更新部分
+def update_other_info(time_get_id):
+	update_dict = dict()
+	url = 'http://service.library.mtime.com/Movie.api?Ajax_CallBack=true&Ajax_CallBackType=Mtime.Library.Services&Ajax_CallBackMethod=GetMovieOverviewRating&Ajax_CrossDomain=1&Ajax_RequestUrl=http%3A%2F%2Fmovie.mtime.com%2F{0}%2F&t=2016671225976913&Ajax_CallBackArgument0={1}'.format(time_get_id, time_get_id)
+	response = urllib2.urlopen(url)
+	# print u'返回结果:%s'% response.code
+	data = (response.read())
+	# print data
+	re_info = re.findall(r'(var result_2016671225976913 = )(.*?)(;var movieOverviewRatingResult=result_2016671225976913;)', data)
+	# print re_info[0][1]
+	json_data = json.loads(re_info[0][1])
+	if json_data['value'] == None:
+		update_dict['average'] = 0
+		update_dict['votes'] = 0
+		update_dict['rank'] = 0
+	else:
+		update_dict['average'] = json_data['value']['movieRating']['RatingFinal']
+		update_dict['votes'] = json_data['value']['movieRating']['Usercount']
+		if 'topList' in json_data['value']:
+			update_dict['rank'] = json_data['value']['topList']['Ranking']
+		else:
+			update_dict['rank'] = 0
+		
+	print u'评分:%s' % update_dict['average']
+	# print u'评分人数:%s' % update_dict['votes']
+	# print u'排名:%s' % update_dict['rank']
+	comment_url = 'http://movie.mtime.com/{0}/comment.html'.format(time_get_id,)
+	sel = Selector(text=urllib2.urlopen(comment_url).read())
+	if sel.xpath('//*[@class="details_nav"]/ul/li[1]/a/text()').extract():
+		long_comment = sel.xpath('//*[@class="details_nav"]/ul/li[1]/a/text()').extract()[0].strip().split('(')[1].split(')')[0].strip()
+		short_comment = sel.xpath('//*[@class="details_nav"]/ul/li[2]/a/text()').extract()[0].strip().split('(')[1].split(')')[0].strip()
+	
+	else:
+		new_comment_url = 'http://movie.mtime.com/{0}/reviews/short/hot.html'.format(time_get_id,)
+		sel = Selector(text=urllib2.urlopen(new_comment_url).read())
+		long_comment = sel.xpath('//*[@class="details_nav"]/ul/li[1]/a/text()').extract()[0].strip().split('(')[1].split(')')[0].strip()
+		short_comment = sel.xpath('//*[@class="details_nav"]/ul/li[2]/a/text()').extract()[0].strip().split('(')[1].split(')')[0].strip()
+	
+	# print u'长影评:%s' % long_comment
+	# print u'短影评:%s' % short_comment
+	news_url = 'http://movie.mtime.com/{0}/'.format(time_get_id,)
+	sel1 = Selector(text=urllib2.urlopen(news_url).read())
+	news_times = sel1.xpath('//*[@token="RelatedNews"]/a/span/text()').extract()[0].strip()
+	# print u'新闻数量:%s' % news_times
+	update_dict['all_long'] = long_comment
+	update_dict['all_short'] = short_comment
+	update_dict['all_news'] = news_times
+	return update_dict
+#时光网单测
+# movie_info('http://movie.mtime.com/215403/', '123', 215403, '111')
 # for i in movie_url_list:
 # 	movie_info(i, '123')
 # 	print '********' * 5 
 
-
 #从豆瓣到时光网
-# for i in get_info:
-# 	get_id = time_id(i)
+count = 0
+for i in get_info:
+	time.sleep(1)
+	count += 1
+	print u'第几个:%s' % count
+	get_id = time_id(i)
 
-# 	if get_id != 'nofind':
-# 		url = 'http://movie.mtime.com/{0}/'.format(get_id)
-# 		print u'时光网的URL:%s' % url
-# 		movie_info(url, i['Relate_ID'])
+	if get_id != 'nofind':
+		url = 'http://movie.mtime.com/{0}/'.format(get_id)
+		print u'时光网的URL:%s' % url
+		movie_info(url, i['Relate_ID'], get_id, i['IMDB_ID'])
 
 # 	print '------' * 5
 
