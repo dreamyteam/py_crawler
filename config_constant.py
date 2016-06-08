@@ -55,7 +55,24 @@ IMDB_staff_list = {
 					'cloth_design': 'Costume Design by',
 				}
 
-#mongodb中的数据存储格式
+#豆瓣人物信息对照表
+douban_human_dict = {
+						'sex': u'性别',
+						'birth': u'出生日期',
+						'birth_area': u'出生地',
+						'position': u'职业',
+						'IMDB_ID': u'imdb编号',
+						'constellation': u'星座',
+						'en_name_other': u'英文名',
+						'foreign_name': u'更多外文名',
+						'cn_name_other': u'更多中文名',
+						'en_name_other': u'英文名',
+					}
+
+
+
+
+#mongodb中影视数据的存储格式
 def data_formate():
 	data = dict()
 	'''一次性数据'''
@@ -151,10 +168,60 @@ def data_formate():
 	data['area'] = str()
 	return data
 
+#人物基础数据存储格式
+def human_info_format():
+	'''基础数据部分'''
+	data = dict()
+	#中文名
+	data['cn_name'] = str()
+	#英文名
+	data['en_name'] = str()
+	#性别
+	data['sex'] = str()
+	#生日
+	data['birth'] = str()
+	#出生地
+	data['birth_area'] = str()
+	#职位
+	data['position'] = str()
+	#原名
+	data['source_name'] = str()
+	#IMDB编号
+	data['IMDB_ID'] = dict()
+	#简介
+	data['introduce'] = list()
+	#教育背景
+	data['EBkG'] = list()
+	#身高
+	data['tall'] = str()
+	#星座
+	data['constellation'] = str()
+	#血型
+	data['blood_type'] = str()
+	#历史作品
+	data['history_works'] = list()
+	#获奖记录
+	data['award_nominate'] = list()
 
+	'''自加字段'''
+	#人物资料起始URL
+	data['human_url'] = str()
+	#人物照片URL
+	data['img_url'] = str()
+	#人物照片
+	data['img_data'] = str()
+	#人物数据来源
+	data['source'] = str()
+	#微博链家
+	data['weibo_url'] = str()
+	#更多外文名
+	data['foreign_name'] = str()
+	#英文名备用
+	data['en_name_other'] = str()
+	#更多中文名
+	data['cn_name_other'] = str()
 
-
-
+	return data
 
 
 
