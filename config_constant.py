@@ -220,8 +220,73 @@ def human_info_format():
 	data['en_name_other'] = str()
 	#更多中文名
 	data['cn_name_other'] = str()
+	#关联的ID
+	data['Releate_ID'] = str()
+	return data
+
+#时光网任务基本信息对照表
+
+time_human_info_dict = {
+							'birth': u'出生日期：',
+							'tall': u'身高：',
+							'constellation': u'星座：',
+							'EBkG': u'教育背景：',
+							'cn_name_other': u'更多中文名：',
+							'blood_type': u'血型：',
+					}
+
+
+#猫眼票房数据存储格式
+def cateye_info():
+	data = dict()
+	'''基本数据字段'''
+	#每日票房
+	data['day_box_office'] = str()
+	#每日排片占比
+	data['day_percent'] = str()
+	#场均人次
+	data['per_people'] = str()
+	#总票房
+	data['all_box_office'] = str()
+	#首周票房
+	data['first_week_box_office'] = str()
+	#点映票房
+	data['point_release_box_office'] = str()
+	#每日排片场次
+	data['day_release_times'] = str()
+	#城市票房数据
+	data['city_box_office'] = list()
+	#城市票房占比
+	data['city_box_office_percent'] = list()
+	#城市排片占比
+	data['city_percent'] = list()
+	#城市累计票房
+	data['city_total_box_office'] = list()
+	
+	'''自加字段'''
+	#电影猫眼URL
+	data['url'] = str()
+	#电影名称
+	data['name'] = str()
 
 	return data
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
