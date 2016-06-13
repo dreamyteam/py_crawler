@@ -32,8 +32,8 @@ def proxy_request(url):
 								)
 	opener = urllib2.build_opener(proxy)
 	urllib2.install_opener(opener)
-
 	return opener.open(request).read()
+	
 def no_proxy(url):
 	response = urllib2.urlopen(url)
 	return  response.read()
@@ -73,11 +73,21 @@ def base_info(sel, url):
 			info_dict['tags'].append(tag)
 
 	#12影片简介
-	is_introduce = sel.xpath('//*[@id="link-report"]/span[1]/text()').extract()
+	
 	info_dict['introduce'] = list()
+	
+	is_introduce = sel.xpath('//*[@id="link-report"]//*[@class="all hidden"]/text()').extract()
 	if is_introduce:
-		introduce= sel.xpath('//*[@id="link-report"]/span[1]/text()').extract()[0].strip()
-		info_dict['introduce'].append(introduce)
+		info_dict['introduce'].extend(is_introduce)
+	else:
+		is_introduce = sel.xpath('//*[@id="link-report"]//*[@property="v:summary"]/text()').extract()
+		if is_introduce:
+			introduce= sel.xpath('//*[@id="link-report"]//*[@property="v:summary"]/text()').extract()
+			info_dict['introduce'].extend(is_introduce)
+	for i in is_introduce:
+		print i
+
+
 
 	#9主演
 	is_main_actor = sel.xpath('//*[@rel="v:starring"]')
@@ -93,7 +103,7 @@ def base_info(sel, url):
 							'name': actor,
 							'url': actor_url
 						}
-			# print u'主演:%s' % actor
+			print u'主演:%s' % actor
 			info_dict['main_actor'].append(actor_dict)
 
 	#8导演
@@ -111,7 +121,7 @@ def base_info(sel, url):
 								'url': director_url
 							}
 			info_dict['director'].append(director_dict)
-			# print u'导演:%s' % director
+			print u'导演:%s' % director
 
 	#10编剧
 	try:
@@ -131,7 +141,7 @@ def base_info(sel, url):
 							'name': editor,
 							'url': editor_url
 						}
-			# print u'编剧:%s' % editor
+			print u'编剧:%s' % editor
 			info_dict['editor'].append(editor_dict)
 
 	# print u'编剧列表:%s' % info_dict['editor']
@@ -142,7 +152,7 @@ def base_info(sel, url):
 	if is_type:
 		for t in is_type:
 			film_type = t.xpath('./text()').extract()[0].strip()
-			# print u'类型:%s' % film_type
+			print u'类型:%s' % film_type
 			info_dict['film_type'].append(film_type) 
 
 	#5/6先国家 后地区
@@ -157,7 +167,7 @@ def base_info(sel, url):
 			else:
 				release_area = ''
 			info_dict['release_time_area'].append([release_area, release_date])
-			# print u'上映国家:{0} 时间:{1}'.format(release_area, release_date)
+			print u'上映国家:{0} 时间:{1}'.format(release_area, release_date)
 
 	#7IMDB编号 可能没有ttid
 	imdb_info = sel.xpath('//div[@id="info"]//*[@rel="nofollow"]')
@@ -173,7 +183,6 @@ def base_info(sel, url):
 		info_dict['IMDB_ID'] = is_exist
 
 	print u'IMDB_编号:%s' % info_dict['IMDB_ID']
-			
 
 
 	#4片长
@@ -184,7 +193,7 @@ def base_info(sel, url):
 		if u'分钟' in is_runtime:
 			is_runtime = is_runtime.split(u'分钟')[0].strip()
 		info_dict['runtime'] = is_runtime
-	# print u'片长:%s' % info_dict['runtime']
+	print u'片长:%s' % info_dict['runtime']
 	#剩余信息
 	zero_dict = {
 					'production_company': [],
@@ -211,7 +220,7 @@ def update_info(sel, url):
 
 	movie_id = url.split('/')[-2]
 	# print u'电影id:%s' % movie_id
-	
+
 	info_dict = dict()
 	info_dict['movie_id'] = movie_id
 	info_dict['Relate_ID'] = movie_id
@@ -265,7 +274,7 @@ def run(data):
 		# print save_data[1]
 			save_data[0].update(save_data[1])
 			save_data[0]['source'] = 'douban'
-			db.MovieInfoData.update({'_id': save_data[0]['movie_id']}, {'$set': save_data[0]}, True)
+			# db.MovieInfoData.update({'_id': save_data[0]['movie_id']}, {'$set': save_data[0]}, True)
 
 run(data)
 
