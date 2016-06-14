@@ -13,7 +13,7 @@ import time
 import re
 
 
-data = db.TVInfo.find({'source': 'douban'}).skip(10).limit(2)
+data = db.TVInfo.find({'source': 'douban'}).skip(600).limit(300)
 
 class ImdbTV(threading.Thread):
 
@@ -23,7 +23,9 @@ class ImdbTV(threading.Thread):
 		self.info_dict = data_formate()
 		self.movie_dict = movie_dict
 		self.flag = flag
+
 	def run(self):
+
 		if self.flag == 'first':
 			all_sel = self.all_return_body()
 			#基本信息
@@ -42,10 +44,12 @@ class ImdbTV(threading.Thread):
 
 		#更新信息
 		self.info_dict.update(self.update_info(self.movie_dict['IMDB_ID']))
-
+		db.TVInfo.update({'movie_url': self.info_dict['movie_url']}, {'$set': self.info_dict}, True)
+		print '----------' * 5
 
 	@staticmethod
 	def run_threads(flag):
+
 		threads = list()
 		for i in data:
 			if i['IMDB_ID']:
@@ -55,21 +59,21 @@ class ImdbTV(threading.Thread):
 
 		for t in threads:
 			t.join()
-
+			
 	def all_return_body(self):
 		ttid = self.movie_dict['IMDB_ID']
 		#基本信息页面
 		url1 = 'http://www.imdb.com/title/{0}/'.format(ttid,)
-		sel1 = Selector(text=urllib2.urlopen(url1).read())
+		sel1 = Selector(text=proxy_request(url1))
 		#上映信息页面
 		url2 = 'http://www.imdb.com/title/{0}/releaseinfo'.format(ttid,)
-		sel2 = Selector(text=urllib2.urlopen(url2).read())
+		sel2 = Selector(text=proxy_request(url2))
 		#制作公司和发行公司
 		url3 = 'http://www.imdb.com/title/{0}/companycredits'.format(ttid,)
-		sel3 = Selector(text=urllib2.urlopen(url3).read())
+		sel3 = Selector(text=proxy_request(url3))
 		#职员
 		url4 = 'http://www.imdb.com/title/{0}/fullcredits'.format(ttid,)
-		sel4 = Selector(text=urllib2.urlopen(url4).read())
+		sel4 = Selector(text=proxy_request(url4))
 		return (url1, sel1, sel2, sel3, sel4)
 
 	def imdb_info(self, url, sel):
@@ -98,13 +102,13 @@ class ImdbTV(threading.Thread):
 		self.info_dict['movie_name'] = sel.xpath('//*[@class="title_wrapper"]//*[@itemprop="name"]/text()').extract()[0].strip()
 		self.info_dict['foreign_name'] = self.info_dict['movie_name']
 		print u'影片名称:%s' % self.info_dict['movie_name']
-
+		
 		#3语言 4片长
 		self.info_dict.update(self.get_info(sel))
 		for i in self.info_dict['language']:
 			print u'语言:%s' % i
 		print u'片长:%s' % self.info_dict['runtime']
-
+		
 		#简介/类型风格
 		storyline = sel.xpath('//*[@id="titleStoryLine"]/h2/text()')
 		self.info_dict['introduce'] = list()
@@ -272,9 +276,10 @@ class ImdbTV(threading.Thread):
 		#获奖提名记录
 		url = 'http://www.imdb.com/title/{0}/awards'.format(ttid,)
 		print u'获奖的URL:%s' % url
-		sel = Selector(text=urllib2.urlopen(url).read())
+		sel = Selector(text=proxy_request(url))
 		url2 = 'http://www.imdb.com/title/{0}/'.format(ttid,)
-		sel2 = Selector(text=urllib2.urlopen(url2).read())
+		self.info_dict['movie_url'] = url2
+		sel2 = Selector(text=proxy_request(url2))
 		if sel.xpath('//*[@class="desc"]'):
 			#次数
 			r = sel.xpath('//*[@class="desc"]/text()').extract()[0].strip().split(' ')
@@ -437,9 +442,7 @@ class ImdbTV(threading.Thread):
 		self.info_dict['update_time'] = time.strftime('%Y-%m-%d %H:%M:%S')
 		return self.info_dict
 
-
-
-ImdbTV.run_threads('update')
+ImdbTV.run_threads('first')
 
 
 
