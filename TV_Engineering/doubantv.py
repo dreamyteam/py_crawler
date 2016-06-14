@@ -7,7 +7,6 @@ sys.setdefaultencoding('utf-8')
 from configfile import *
 import threading
 import urllib2
-import json
 import bson
 from scrapy.selector import Selector
 import time
@@ -16,23 +15,25 @@ data = db.DoubanTagID.find().skip(2103).limit(20)
 
 class DoubanTV(threading.Thread):
 
-	def __init__(self, movie_dict):
+	def __init__(self, movie_dict, flag):
 
 		threading.Thread.__init__(self)
 		self.info_dict = data_formate()
 		self.movie_dict = movie_dict
-
+		self.flag = flag
 	def run(self):
-		sel = self.return_info()
-		self.info_dict.update(self.base_info(sel))
+		if self.flag == 'first':
+			sel = self.return_info()
+			if self.base_info(sel) != 'pass':
+				self.info_dict.update(self.base_info(sel))
 		self.info_dict.update(self.update_info(sel))
 		db.TVInfo.update({'movie_url': self.info_dict['movie_url']}, {'$set': self.info_dict}, True)
 
 	@staticmethod
-	def run_threads():
+	def run_threads(flag):
 		threads = list()
 		for i in data:
-			thread_1 = DoubanTV(i)
+			thread_1 = DoubanTV(i, flag)
 			thread_1.start()
 			threads.append(thread_1)
 		for t in threads:
@@ -63,7 +64,7 @@ class DoubanTV(threading.Thread):
 		try:
 			self.info_dict['img_url'] = sel.xpath('//div[@id="mainpic"]/a/img/@src').extract()[0].strip()
 		except Exception, e:
-			return 'pass'
+			return 'pass' #感觉有bug
 
 		print u'影片图片地址:***%s' % self.info_dict['img_url']
 		self.info_dict['img_data'] = bson.Binary(urllib2.urlopen(self.info_dict['img_url']).read())
@@ -221,7 +222,7 @@ class DoubanTV(threading.Thread):
 		print u'更新时间:%s' % self.info_dict['update_time']
 		return self.info_dict
 
-DoubanTV.run_threads()
+DoubanTV.run_threads('first')
 
 
 
