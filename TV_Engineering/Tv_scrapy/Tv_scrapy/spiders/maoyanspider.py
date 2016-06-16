@@ -7,6 +7,7 @@ import urllib2
 import json
 import re
 import time
+
 #猫眼服务器压力测试 提高并发数测试
 class MaoyanSpider(scrapy.Spider):
 
@@ -14,7 +15,7 @@ class MaoyanSpider(scrapy.Spider):
 
 	def start_requests(self):
 		
-		get_info = db.TVInfo.find({'source': 'douban'}).skip(0).limit(100)
+		get_info = db.TVInfo.find({'source': 'douban'}).skip(500).limit(500)
 
 		for i in get_info:
 
@@ -31,6 +32,7 @@ class MaoyanSpider(scrapy.Spider):
 											}, 
 										callback=self.parse
 									)
+
 
 	#按名称和时间刷选电影 搜索按照先豆瓣后IMDB检索
 
@@ -53,6 +55,7 @@ class MaoyanSpider(scrapy.Spider):
 			maoyan_url = 'http://piaofang.maoyan.com' + i.xpath('./@data-url').extract()[0].strip()
 			
 			is_box_office = i.xpath('./em/text()').extract()[0].strip()
+			
 			for j in response.meta['movie_name']:
 				if j in movie_name:
 					is_all_words.append('ok')
@@ -78,6 +81,7 @@ class MaoyanSpider(scrapy.Spider):
 																'IMDB_ID': response.meta['IMDB_ID'],
 																'source': response.meta['source'],
 																'Relate_ID': response.meta['Relate_ID'],
+																'cat_url': maoyan_url,
 															},													
 															callback=self.maoyan_info
 													)
@@ -99,11 +103,13 @@ class MaoyanSpider(scrapy.Spider):
 		data['all_box_office'] = sel.xpath('//*[@class="tags clearfix"]/span/text()').extract()[0].strip()
 		print u'总票房:%s' % data['all_box_office']
 
-
+		
 		#日票房信息
 		all_day = sel.xpath('//*[@id="ticketList"]//*[@id="ticket_tbody"]/ul')
 		data['day_info'] = list()
+
 		for i in all_day:
+
 			update_dict = dict()
 			update_dict['date'] = i.xpath('./li[1]/span/b/text()').extract()[0].strip()
 			print u'日期:%s' % update_dict['date']
@@ -118,54 +124,61 @@ class MaoyanSpider(scrapy.Spider):
 			data['day_info'].append(update_dict)
 			print '-------' * 5
 
-		data.update(self.city_info(data))
+		city_data = self.city_info(data, response.meta['cat_url'])
+		# print city_data
+		data.update(city_data)
 		data['update_time'] = time.strftime('%Y-%m-%d %H:%M:%S')
 		db.CatEyeInfo.update({'movie_url': data['movie_url']}, {'$set': data}, True)
 
 
 	#猫眼城市信息
-	def city_info(self, meta_data):
-		data = dict()
-		data['city_info'] = dict()
+	def city_info(self, meta_data, maoyan_url):
+
+		update_data = dict()
+		update_data['city_info'] = dict()
 
 		for i in meta_data['day_info']:
-
-			url = 'http://piaofang.maoyan.com/movie/78421/cityBox?date={0}'.format(i['date'])
+			url = maoyan_url + '/cityBox?date={0}'.format(i['date'])
+			print u'城市票房的URL:%s' % url
 			json_data = json.loads(urllib2.urlopen(url).read())
+
 			sel = Selector(text=json_data['html'])
+
 			all_info = sel.xpath('//*[@class="m-table normal m-table-city"]/tbody/tr')
+			
 			city_info_list = list()
 
-			for i in all_info:
-				update_dict = dict
-				update_dict['city'] = i.xpath('./td[1]/text()').extract()[0].strip()
+			for j in all_info:
+
+				update_dict = dict()
+				update_dict['city'] = j.xpath('./td[1]/text()').extract()[0].strip()
 				print u'城市:%s' % update_dict['city']
-				update_dict['box_office'] = i.xpath('./td[2]/text()').extract()[0].strip()
+				update_dict['box_office'] = j.xpath('./td[2]/text()').extract()[0].strip()
 				print u'票房:%s' % update_dict['box_office']
-				update_dict['box_office_percent'] = i.xpath('./td[3]/text()').extract()[0].strip()
+				update_dict['box_office_percent'] = j.xpath('./td[3]/text()').extract()[0].strip()
 				print u'票房占比:%s' % update_dict['box_office_percent']
-				update_dict['release_percent'] = i.xpath('./td[4]/text()').extract()[0].strip()
+				update_dict['release_percent'] = j.xpath('./td[4]/text()').extract()[0].strip()
 				print u'排片占比:%s' % update_dict['release_percent']
-				update_dict['total_box_office'] = i.xpath('./td[5]/text()').extract()[0].strip()
+				update_dict['total_box_office'] = j.xpath('./td[5]/text()').extract()[0].strip()
 				print u'累计票房:%s' % update_dict['total_box_office']
-				update_dict['position_percent'] = i.xpath('./td[6]/text()').extract()[0].strip()
+				update_dict['position_percent'] = j.xpath('./td[6]/text()').extract()[0].strip()
 				print u'排座占比:%s' % update_dict['position_percent']
-				update_dict['gold_percent'] = i.xpath('./td[7]/text()').extract()[0].strip()
+				update_dict['gold_percent'] = j.xpath('./td[7]/text()').extract()[0].strip()
 				print u'黄金场占比:%s' % update_dict['gold_percent']
-				update_dict['per_people'] = i.xpath('./td[8]/text()').extract()[0].strip()
+				update_dict['per_people'] = j.xpath('./td[8]/text()').extract()[0].strip()
 				print u'场均人次:%s' % update_dict['per_people']
-				update_dict['people'] = i.xpath('./td[9]/text()').extract()[0].strip()
+				update_dict['people'] = j.xpath('./td[9]/text()').extract()[0].strip()
 				print u'人次:%s' % update_dict['people']
-				update_dict['times'] = i.xpath('./td[10]/text()').extract()[0].strip()
+				update_dict['times'] = j.xpath('./td[10]/text()').extract()[0].strip()
 				print u'场次:%s' % update_dict['times']
 
 				city_info_list.append(update_dict)
 				print '-------------' * 5
 
-			data['city_info'][i['date']] = city_info_list
+			update_data['city_info'][i['date']] = city_info_list
 
 
-		return data
+		return update_data
 
 
 
