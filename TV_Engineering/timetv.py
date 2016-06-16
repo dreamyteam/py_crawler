@@ -13,8 +13,9 @@ from scrapy.selector import Selector
 import time
 import re
 
+import random
 
-data = db.TVInfo.find({'source': 'douban'}).skip(0).limit(20)
+data_info = db.TVInfo.find({'source': 'douban'}).skip(400).limit(200)
 
 class TimeTV(threading.Thread):
 
@@ -26,7 +27,8 @@ class TimeTV(threading.Thread):
 		self.flag = flag
 
 	def run(self):
-		
+
+		time.sleep(3)
 		if self.flag == 'first':
 			time_id = self.time_id(self.movie_dict)
 			if time_id != 'nofind':
@@ -34,8 +36,9 @@ class TimeTV(threading.Thread):
 				self.info_dict.update(self.movie_info(tuple_list, self.movie_dict, time_id))
 				self.info_dict.update(self.awards_record(time_id))
 				self.info_dict.update(self.update_other_info(time_id))
+				self.info_dict['update_time'] = time.strftime('%Y-%m-%d %H:%M:%S')
+				print u'更新时间:%s' % self.info_dict['update_time']
 				db.TVInfo.update({'movie_url': self.info_dict['movie_url']}, {'$set': self.info_dict}, True)
-
 
 			print '-------' * 5
 
@@ -43,7 +46,7 @@ class TimeTV(threading.Thread):
 	def run_threads(flag):
 
 		threads = list()
-		for i in data:
+		for i in data_info:
 			thread_1 = TimeTV(i, flag)
 			thread_1.start()
 			threads.append(thread_1)
@@ -126,31 +129,41 @@ class TimeTV(threading.Thread):
 	def all_return_result(self, time_id, movie_dict):
 
 		url = 'http://movie.mtime.com/{0}/'.format(time_id)
-		#影片起始页面
-		# response1 = urllib2.urlopen(url)
-		# #影片更多资料
-		# response2 = urllib2.urlopen(url + 'details.html') 
-		# #影片简介
-		# response3 = urllib2.urlopen(url + 'plots.html') 
-		# #演职人员
-		# response4 = urllib2.urlopen(url + 'fullcredits.html') 
-		# data1 = response1.read()
-		# data2 = response2.read()
-		# data3 = response3.read()
-		# data4 = response4.read()
-		# sel1 = Selector(text=data1)
-		# sel2 = Selector(text=data2)
-		# sel3 = Selector(text=data3)
-		# sel4 = Selector(text=data4)
-		sel1 = Selector(text=proxy_request(url))
-		sel2 = Selector(text=proxy_request(url + 'details.html') )
-		sel3 = Selector(text=proxy_request(url + 'plots.html'))
-		sel4 = Selector(text=proxy_request(url + 'fullcredits.html'))
+		if random.choice(request_list) == 'no':
+			# 影片起始页面
+			response1 = urllib2.urlopen(url)
+			
+			#影片更多资料
+			
+			response2 = urllib2.urlopen(url + 'details.html') 
+			#影片简介
+			
+			response3 = urllib2.urlopen(url + 'plots.html') 
+			#演职人员
+		
+			response4 = urllib2.urlopen(url + 'fullcredits.html') 
+
+			data1 = response1.read()
+			data2 = response2.read()
+			data3 = response3.read()
+			data4 = response4.read()
+			sel1 = Selector(text=data1)
+			sel2 = Selector(text=data2)
+			sel3 = Selector(text=data3)
+			sel4 = Selector(text=data4)
+
+		else:
+
+			sel1 = Selector(text=proxy_request(url).read())
+			sel2 = Selector(text=proxy_request(url + 'details.html').read() )
+			sel3 = Selector(text=proxy_request(url + 'plots.html').read())
+			sel4 = Selector(text=proxy_request(url + 'fullcredits.html').read())
 
 		return (url, sel1, sel2, sel3, sel4)
 
 	#影片基本信息
 	def movie_info(self, tuple_list, movie_dict, time_id):
+		
 		update_dict = dict()
 		#非请求基本信息
 		update_dict['Relate_ID'] = movie_dict['Relate_ID']
@@ -176,6 +189,7 @@ class TimeTV(threading.Thread):
 
 		#2 英文名称
 		is_en_name = tuple_list[2].xpath('//*[@class="db_enname"]/a/text()').extract()
+		update_dict['foreign_name'] = str()
 		if is_en_name:
 			update_dict['foreign_name'] = tuple_list[2].xpath('//*[@class="db_enname"]/a/text()').extract()[0].strip()
 
@@ -308,8 +322,6 @@ class TimeTV(threading.Thread):
 					update_dict['actor_charactor'].append([actor_dict, charactor])
 		return update_dict
 
-
-
 	#判断制作国家和地区
 	def select_contry(self, para_list):
 		if u'国家地区：' in para_list:
@@ -397,31 +409,22 @@ class TimeTV(threading.Thread):
 					add_dict['distributors'] = company_list
 					return add_dict
 
-
 	#获奖和提名记录还有次数属于更新
 	def awards_record(self, time_id):
 		update_dict = dict()
 		url = 'http://movie.mtime.com/{0}/awards.html'.format(time_id)
-		# response5 = urllib2.urlopen(url) #获奖记录
-
-		request = urllib2.Request(url)
-		proxy = urllib2.ProxyHandler(
-										{
-											'http': 'http://127.0.0.1:8123',
-											'https': 'https://127.0.0.1:8123',
-										}
-									)
-		opener = urllib2.build_opener(proxy)
-		urllib2.install_opener(opener)
-		
+		if random.choice(request_list) == 'no':
+			get_return = urllib2.urlopen(url) #获奖记录
+		else:
+			get_return = proxy_request(url)
 
 		#29获奖记录 30提名
-		if opener.open(request).url == 'http://www.mtime.com/404.html':
-
+		if get_return.url == 'http://www.mtime.com/404.html':
+			
 			update_dict['award_nominate'] = list()
 			return update_dict['award_nominate']
 		else:
-			sel5 = Selector(text=opener.open(request).read())
+			sel5 = Selector(text=get_return.read())
 			# print u'奖项种类:%s' % len(sel5.xpath('//*[@id="awardInfo_data"]/dd'))
 			
 			won_times_list = list()
@@ -429,6 +432,7 @@ class TimeTV(threading.Thread):
 			award_nominate = list()
 
 			for i in sel5.xpath('//*[@id="awardInfo_data"]/dd'):
+
 				format_dict = {
 								'date': '',
 								'award_body': '',
@@ -553,6 +557,7 @@ class TimeTV(threading.Thread):
 			update_dict['nominations'] = sum(nominated_times_list)
 			update_dict['wins'] = sum(won_times_list)
 			update_dict['award_nominate'] = award_nominate
+			
 			return update_dict
 
 
@@ -560,21 +565,14 @@ class TimeTV(threading.Thread):
 	def update_other_info(self, time_get_id):
 		update_dict = dict()
 		url = 'http://service.library.mtime.com/Movie.api?Ajax_CallBack=true&Ajax_CallBackType=Mtime.Library.Services&Ajax_CallBackMethod=GetMovieOverviewRating&Ajax_CrossDomain=1&Ajax_RequestUrl=http%3A%2F%2Fmovie.mtime.com%2F{0}%2F&t=2016671225976913&Ajax_CallBackArgument0={1}'.format(time_get_id, time_get_id)
-		request = urllib2.Request(url)
-		proxy = urllib2.ProxyHandler(
-										{
-											'http': 'http://127.0.0.1:8123',
-											'https': 'https://127.0.0.1:8123',
-										}
-									)
-		opener = urllib2.build_opener(proxy)
-		urllib2.install_opener(opener)
-		# response = urllib2.urlopen(url)
+		if random.choice(request_list) == 'no':
+			get_return = urllib2.urlopen(url).read()
+		else:
 		# print u'返回结果:%s'% response.code
 		# data = (response.read())
-		data = opener.open(request).read()
+			get_return = proxy_request(url).read()
 		# print data
-		re_info = re.findall(r'(var result_2016671225976913 = )(.*?)(;var movieOverviewRatingResult=result_2016671225976913;)', data)
+		re_info = re.findall(r'(var result_2016671225976913 = )(.*?)(;var movieOverviewRatingResult=result_2016671225976913;)', get_return)
 		# print re_info[0][1]
 		json_data = json.loads(re_info[0][1])
 		if json_data['value'] == None:
@@ -616,10 +614,9 @@ class TimeTV(threading.Thread):
 		update_dict['all_long'] = long_comment
 		update_dict['all_short'] = short_comment
 		update_dict['all_news'] = news_times
+		
 		return update_dict
 		
-
-
 
 TimeTV.run_threads('first')
 
