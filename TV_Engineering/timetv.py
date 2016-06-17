@@ -114,8 +114,10 @@ class TimeTV(object):
 		try:
 			all_tuple = self.request_again(url)
 		except urllib2.HTTPError, e:
+			time.sleep(1)
 			all_tuple = self.request_again(url)
 		else:
+			time.sleep(1)
 			all_tuple = self.request_again(url)
 		return all_tuple
 
@@ -402,8 +404,10 @@ class TimeTV(object):
 		try:
 			get_return = urllib2.urlopen(url) #获奖记录
 		except urllib2.HTTPError, e:
+			time.sleep(1)
 			get_return = urllib2.urlopen(url) #再请求一次
 		else:
+			time.sleep(1)
 			get_return = urllib2.urlopen(url) #请求2.0
 		# else:
 		# 	get_return = proxy_request(url)
@@ -559,8 +563,10 @@ class TimeTV(object):
 		try:
 			get_return = urllib2.urlopen(url).read()
 		except urllib2.HTTPError, e:
+			time.sleep(1)
 			get_return = urllib2.urlopen(url).read()
 		else:
+			time.sleep(1)
 			get_return = urllib2.urlopen(url).read()
 		# else:
 		# print u'返回结果:%s'% response.code
@@ -620,7 +626,7 @@ class TimeTV(object):
 		
 def run_threads():
 
-	data_info = db.TVInfo.find({'source': 'douban'}).skip(1133).limit(500)
+	data_info = db.TVInfo.find({'source': 'douban'}).skip(1147).limit(500)
 	count = 0
 	for i in data_info:
 		count += 1
