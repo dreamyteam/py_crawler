@@ -135,6 +135,13 @@ def data_formate():
 	data['wins'] = int()
 	#获奖提名具体信息记录（每月）
 	data['award_nominate'] = list()
+	#更新时间
+	data['update_time'] = str()
+
+	'''更新历史信息'''
+	data['history_info'] = list()
+
+
 
 	'''自加字段'''
 	#豆瓣时光IMDB关联ID，用豆瓣ID关联
@@ -151,10 +158,39 @@ def data_formate():
 	data['area'] = str()
 	#影片年份
 	data['movie_time'] = str()
+	
+	return data
+
+#历史记录数据存储格式
+def history_formate():
+	
+	data = dict()
+	'''更新数据'''
+	#评分（每月）
+	data['average'] = str()
+	#评分人数（每月）
+	data['votes'] = int()
+	#短评数量（每月）
+	data['all_short'] = int()
+	#长评数量（每月）
+	data['all_long'] = int()
+	#新闻数量（每月）
+	data['all_news'] = int()
+	#排名（时光和IMDB独有， 每天）
+	data['rank'] = str()
+	#提名次数（每月）
+	data['nominations'] = int()
+	#获奖次数（每月）
+	data['wins'] = int()
+	#获奖提名具体信息记录（每月）
+	data['award_nominate'] = list()
 	#更新时间
 	data['update_time'] = str()
-
+	
 	return data
+
+
+
 
 #时光网演职员标签
 staff_list = {
@@ -190,15 +226,16 @@ def proxy_request(url):
 									{
 										'http': 'http://127.0.0.1:8123',
 										'https': 'https://127.0.0.1:8123',
-									}
+									},
 								)
+
 	opener = urllib2.build_opener(proxy)
 	urllib2.install_opener(opener)
-	return opener.open(request).read()
+	return opener.open(request)
 	
 def no_proxy(url):
 	response = urllib2.urlopen(url)
-	return  response.read()
+	return  response
 
 
 
