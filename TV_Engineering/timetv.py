@@ -554,6 +554,7 @@ class TimeTV(object):
 	def update_other_info(self, time_get_id):
 		update_dict = dict()
 		url = 'http://service.library.mtime.com/Movie.api?Ajax_CallBack=true&Ajax_CallBackType=Mtime.Library.Services&Ajax_CallBackMethod=GetMovieOverviewRating&Ajax_CrossDomain=1&Ajax_RequestUrl=http%3A%2F%2Fmovie.mtime.com%2F{0}%2F&t=2016671225976913&Ajax_CallBackArgument0={1}'.format(time_get_id, time_get_id)
+		
 		# if random.choice(request_list) == 'no':
 		get_return = urllib2.urlopen(url).read()
 		# else:
@@ -569,13 +570,19 @@ class TimeTV(object):
 			update_dict['votes'] = 0
 			update_dict['rank'] = 0
 		else:
-			update_dict['average'] = json_data['value']['movieRating']['RatingFinal']
-			update_dict['votes'] = json_data['value']['movieRating']['Usercount']
-			if 'topList' in json_data['value']:
-				update_dict['rank'] = json_data['value']['topList']['Ranking']
+			if 'movieRating' in json_data['value']:
+				update_dict['average'] = json_data['value']['movieRating']['RatingFinal']
+				update_dict['votes'] = json_data['value']['movieRating']['Usercount']
+				if 'topList' in json_data['value']:
+					update_dict['rank'] = json_data['value']['topList']['Ranking']
+				else:
+					update_dict['rank'] = 0
 			else:
+				update_dict['average'] = 0
+				update_dict['votes'] = 0
 				update_dict['rank'] = 0
-			
+
+
 		print u'评分:%s' % update_dict['average']
 		print u'评分人数:%s' % update_dict['votes']
 		print u'排名:%s' % update_dict['rank']
@@ -608,13 +615,13 @@ class TimeTV(object):
 		
 def run_threads():
 
-	data_info = db.TVInfo.find({'source': 'douban'}).skip(938).limit(200)
+	data_info = db.TVInfo.find({'source': 'douban'}).skip(1022).limit(578)
 	count = 0
 	for i in data_info:
 		count += 1
 		print u'第几个:%s' % count
 		TimeTV(i, 'first').run()
-		time.sleep(3)
+		time.sleep(4)
 		print '-------' * 5
 
 run_threads()
