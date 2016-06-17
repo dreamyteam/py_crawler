@@ -246,7 +246,7 @@ class DoubanTV(object):
 def run_threads():
 
 	count = 0
-	data = db.DoubanTagID.find().skip(4300).limit(700)
+	data = db.DoubanTagID.find().skip(5000).limit(2000)
 	for i in data:
 		count += 1
 		print u'第几个:%s' % count
