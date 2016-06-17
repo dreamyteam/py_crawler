@@ -20,14 +20,12 @@ class TimeTV(object):
 
 	def __init__(self, movie_dict, flag):
 
-		threading.Thread.__init__(self)
 		self.info_dict = data_formate()
 		self.movie_dict = movie_dict
 		self.flag = flag
 
 	def run(self):
 
-		time.sleep(3)
 		if self.flag == 'first':
 			time_id = self.time_id(self.movie_dict)
 			if time_id != 'nofind':
@@ -50,7 +48,7 @@ class TimeTV(object):
 		deal_data = json.loads(re_info[0][1])
 
 		keywords = ''.join([i['value'] for i in deal_data['value']['words']])
-		print u'检索出来的关键字:%s' % keywords
+		# print u'检索出来的关键字:%s' % keywords
 		
 		#检索和判断
 		if 'moreMovies' in deal_data['value']['movieResult']:
@@ -79,7 +77,7 @@ class TimeTV(object):
 				elif (len(norepid_list) != 1) and (str(movie_time) not in i['movieTitle']):
 					if (len(norepid_list_2) == 1) and (norepid_list_2[0] == 'ok') and (str(movie_time) in i['titleOthers']):
 						return i['movieId']
-				print '\n'
+				# print '\n'
 
 		return 'nomatch'
 
@@ -114,35 +112,35 @@ class TimeTV(object):
 	def all_return_result(self, time_id, movie_dict):
 
 		url = 'http://movie.mtime.com/{0}/'.format(time_id)
-		if random.choice(request_list) == 'no':
-			# 影片起始页面
-			response1 = urllib2.urlopen(url)
-			
-			#影片更多资料
-			
-			response2 = urllib2.urlopen(url + 'details.html') 
-			#影片简介
-			
-			response3 = urllib2.urlopen(url + 'plots.html') 
-			#演职人员
+		# if random.choice(request_list) == 'no':
+		# 影片起始页面
+		response1 = urllib2.urlopen(url)
 		
-			response4 = urllib2.urlopen(url + 'fullcredits.html') 
+		#影片更多资料
+		
+		response2 = urllib2.urlopen(url + 'details.html') 
+		#影片简介
+		
+		response3 = urllib2.urlopen(url + 'plots.html') 
+		#演职人员
+	
+		response4 = urllib2.urlopen(url + 'fullcredits.html') 
 
-			data1 = response1.read()
-			data2 = response2.read()
-			data3 = response3.read()
-			data4 = response4.read()
-			sel1 = Selector(text=data1)
-			sel2 = Selector(text=data2)
-			sel3 = Selector(text=data3)
-			sel4 = Selector(text=data4)
+		data1 = response1.read()
+		data2 = response2.read()
+		data3 = response3.read()
+		data4 = response4.read()
+		sel1 = Selector(text=data1)
+		sel2 = Selector(text=data2)
+		sel3 = Selector(text=data3)
+		sel4 = Selector(text=data4)
 
-		else:
+		# else:
 
-			sel1 = Selector(text=proxy_request(url).read())
-			sel2 = Selector(text=proxy_request(url + 'details.html').read() )
-			sel3 = Selector(text=proxy_request(url + 'plots.html').read())
-			sel4 = Selector(text=proxy_request(url + 'fullcredits.html').read())
+		# 	sel1 = Selector(text=proxy_request(url).read())
+		# 	sel2 = Selector(text=proxy_request(url + 'details.html').read() )
+		# 	sel3 = Selector(text=proxy_request(url + 'plots.html').read())
+		# 	sel4 = Selector(text=proxy_request(url + 'fullcredits.html').read())
 
 		return (url, sel1, sel2, sel3, sel4)
 
@@ -193,11 +191,11 @@ class TimeTV(object):
 					for j in other_name_list:
 						other_name = j.xpath('./text()').extract()[0].strip()
 						update_dict['other_name'].append(other_name)
-						print u'别名:%s' % other_name
+						# print u'别名:%s' % other_name
 
 				update_dict['runtime'] = is_exist[-1].xpath('./p/text()').extract()[0].strip()
 
-			print u'电影片长:%s' %  update_dict['runtime']
+			# print u'电影片长:%s' %  update_dict['runtime']
 				
 		#6影片类型
 		is_type = tuple_list[1].xpath('//*[@property="v:genre"]')
@@ -205,7 +203,7 @@ class TimeTV(object):
 		if is_type:
 			for i in is_type:
 				movie_type = i.xpath('./text()').extract()[0].strip()
-				print u'影片类型:%s' % movie_type
+				# print u'影片类型:%s' % movie_type
 				update_dict['film_type'].append(movie_type)
 
 		#7/8 简介和IMDB编号
@@ -216,7 +214,7 @@ class TimeTV(object):
 				introduce1 = i.xpath('.//*[@class="first_letter"]/text()').extract()[0].strip()
 				introduce_list = i.xpath('./div[2]//p/text()').extract()
 				introduce2 = ''.join(introduce_list)
-				print u'简介:{0}{1}'.format(introduce1, introduce2)
+				# print u'简介:{0}{1}'.format(introduce1, introduce2)
 				update_dict['introduce'].append(introduce1+introduce2)
 
 		#10 制作国家/地区	
@@ -226,12 +224,12 @@ class TimeTV(object):
 			for i in is_info_l:
 				info_l = i.xpath('./strong/text()').extract()[0].strip()
 				para_list.append(info_l)
-				print u'------{0}-----'.format(info_l,)
+				# print u'------{0}-----'.format(info_l,)
 		is_area = self.select_contry(para_list)
 		if is_area != None:
 			area = tuple_list[1].xpath('//*[@pan="M14_Movie_Overview_BaseInfo"][{0}]/a/text()'.format(is_area,)).extract()[0].strip()
 			update_dict['area'] = area
-			print u'制作国家和地区:%s' % update_dict['area']
+			# print u'制作国家和地区:%s' % update_dict['area']
 
 		#11/12上映时间的地区
 		is_release = tuple_list[2].xpath('//*[@class="db_showdate"]')
@@ -241,7 +239,7 @@ class TimeTV(object):
 			for i in release_list[1:]:
 				countryname = i.xpath('./div[1]/p/text()').extract()[0].strip()
 				datecont = i.xpath('./div[2]/text()').extract()[0].strip()
-				print u'地区:{0}*****时间:{1}'.format(countryname, datecont)
+				# print u'地区:{0}*****时间:{1}'.format(countryname, datecont)
 				update_dict['release_info'].append([countryname, datecont])
 
 		#13语言
@@ -288,11 +286,17 @@ class TimeTV(object):
 		if is_actor:
 			for i in is_actor:
 				for j in i.xpath('./dd'):
-					actor = j.xpath('.//*[@class="actor_tit"]//h3/a/text()').extract()[0].strip()
-					if j.xpath('.//*[@class="actor_tit"]//h3/a/@href').extract():
-						actor_url = j.xpath('.//*[@class="actor_tit"]//h3/a/@href').extract()[0].strip()
+					actor = j.xpath('.//*[@class="actor_tit"]//h3/a/text()').extract()
+					if actor:
+						actor = j.xpath('.//*[@class="actor_tit"]//h3/a/text()').extract()[0].strip()
+						if j.xpath('.//*[@class="actor_tit"]//h3/a/@href').extract():
+							actor_url = j.xpath('.//*[@class="actor_tit"]//h3/a/@href').extract()[0].strip()
+						else:
+							actor_url = str()
 					else:
-						actor_url = ''
+						actor = str()
+
+
 					actor_dict = {
 									'name': actor,
 									'url': actor_url,
@@ -303,7 +307,7 @@ class TimeTV(object):
 						charactor = j.xpath('.//*[@class="character_inner"]//h3/a/text() | .//*[@class="character_inner"]//h3/text()').extract()[0].strip()
 					else:
 						charactor = ''
-					print u'演员:{0}\t\t角色:{1}'.format(actor, charactor)
+					# print u'演员:{0}\t\t角色:{1}'.format(actor, charactor)
 					update_dict['actor_charactor'].append([actor_dict, charactor])
 		return update_dict
 
@@ -347,7 +351,7 @@ class TimeTV(object):
 									'name': people_info,
 									'url': people_url,
 								}
-					print u'{0}:{1}'.format(staff_list[i], people_info)
+					# print u'{0}:{1}'.format(staff_list[i], people_info)
 					new_info_list.append(insert_dict)
 				update_dict[i] = new_info_list
 		return update_dict
@@ -398,10 +402,10 @@ class TimeTV(object):
 	def awards_record(self, time_id):
 		update_dict = dict()
 		url = 'http://movie.mtime.com/{0}/awards.html'.format(time_id)
-		if random.choice(request_list) == 'no':
-			get_return = urllib2.urlopen(url) #获奖记录
-		else:
-			get_return = proxy_request(url)
+		# if random.choice(request_list) == 'no':
+		get_return = urllib2.urlopen(url) #获奖记录
+		# else:
+		# 	get_return = proxy_request(url)
 
 		#29获奖记录 30提名
 		if get_return.url == 'http://www.mtime.com/404.html':
@@ -431,16 +435,16 @@ class TimeTV(object):
 				both_name = i.xpath('./h3/b/text()').extract()[0].strip()
 				format_dict['award_body'] = both_name
 				format_dict['award_category'] = both_name
-				print u'奖项名称:%s' % format_dict['award_category']
+				# print u'奖项名称:%s' % format_dict['award_category']
 				#只得过一届的信息处理
 				if i.xpath('.//*[@class="mr15"]/a/text()').extract():
 					format_dict['date'] = i.xpath('.//*[@class="mr15"]/a/text()').extract()[0].strip()
 					#提名获奖都有
 					if  len(i.xpath('./h3/text()').extract()) == 5:
 						won_times = int(i.xpath('./h3/strong[1]/text()').extract()[0].strip())
-						print u'获奖次数:%s' % won_times
+						# print u'获奖次数:%s' % won_times
 						nominated_times = int(i.xpath('./h3/strong[2]/text()').extract()[0].strip())
-						print u'提名次数:%s' % nominated_times
+						# print u'提名次数:%s' % nominated_times
 						won_times_list.append(won_times)
 						nominated_times_list.append(nominated_times)
 						insert_dict = {
@@ -550,12 +554,12 @@ class TimeTV(object):
 	def update_other_info(self, time_get_id):
 		update_dict = dict()
 		url = 'http://service.library.mtime.com/Movie.api?Ajax_CallBack=true&Ajax_CallBackType=Mtime.Library.Services&Ajax_CallBackMethod=GetMovieOverviewRating&Ajax_CrossDomain=1&Ajax_RequestUrl=http%3A%2F%2Fmovie.mtime.com%2F{0}%2F&t=2016671225976913&Ajax_CallBackArgument0={1}'.format(time_get_id, time_get_id)
-		if random.choice(request_list) == 'no':
-			get_return = urllib2.urlopen(url).read()
-		else:
+		# if random.choice(request_list) == 'no':
+		get_return = urllib2.urlopen(url).read()
+		# else:
 		# print u'返回结果:%s'% response.code
 		# data = (response.read())
-			get_return = proxy_request(url).read()
+			# get_return = proxy_request(url).read()
 		# print data
 		re_info = re.findall(r'(var result_2016671225976913 = )(.*?)(;var movieOverviewRatingResult=result_2016671225976913;)', get_return)
 		# print re_info[0][1]
@@ -602,16 +606,15 @@ class TimeTV(object):
 		
 		return update_dict
 		
-
-
 def run_threads():
-	data_info = db.TVInfo.find({'source': 'douban'}).skip(600).limit(200)
+
+	data_info = db.TVInfo.find({'source': 'douban'}).skip(712).limit(300)
 	count = 0
 	for i in data_info:
 		count += 1
 		print u'第几个:%s' % count
 		TimeTV(i, 'first').run()
-		time.sleep(2)
+		time.sleep(3)
 		print '-------' * 5
 
 run_threads()
