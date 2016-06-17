@@ -74,7 +74,11 @@ class DoubanTV(object):
 		all_name_list.pop(0)
 		self.info_dict['foreign_name'] = ' '.join(all_name_list)
 		# print u'外文名:%s' % self.info_dict['foreign_name']
-		self.info_dict['movie_time'] = sel.xpath('//*[@class="year"]/text()').extract()[0].strip().split('(')[1].strip().split(')')[0].strip()
+		try:
+			self.info_dict['movie_time'] = sel.xpath('//*[@class="year"]/text()').extract()[0].strip().split('(')[1].strip().split(')')[0].strip()
+		except IndexError, e:
+			self.info_dict['movie_time'] = str()
+		
 		# print u'影片年份:*****%s' % self.info_dict['movie_time'] #和时光网关联标识
 
 		#4片长
@@ -99,6 +103,14 @@ class DoubanTV(object):
 					release_area = ''
 				self.info_dict['release_info'].append([release_area, release_date])
 				# print u'上映国家:{0} 时间:{1}'.format(release_area, release_date)
+
+		if self.info_dict['movie_time'] == str():
+			if self.info_dict['release_info']:
+				self.info_dict['movie_time'] = self.info_dict['release_info'][0][1].split('-')[0].strip()
+				print u'通过上映时间获取的年份:%s' % self.info_dict['movie_time']
+
+
+
 
 		#7IMDB编号 可能没有ttid
 		imdb_info = sel.xpath('//div[@id="info"]//*[@rel="nofollow"]')
@@ -231,16 +243,17 @@ class DoubanTV(object):
 		return self.info_dict
 
 
-
 def run_threads():
+
 	count = 0
-	data = db.DoubanTagID.find().skip(2820).limit(180)
+	data = db.DoubanTagID.find().skip(2838).limit(100)
 	for i in data:
 		count += 1
 		print u'第几个:%s' % count
 		time.sleep(2)
 		DoubanTV(i, 'first').run()
 		print '********' * 5
+
 run_threads()
 
 
