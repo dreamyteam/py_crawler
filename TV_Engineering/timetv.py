@@ -115,7 +115,8 @@ class TimeTV(object):
 			all_tuple = self.request_again(url)
 		except urllib2.HTTPError, e:
 			all_tuple = self.request_again(url)
-		
+		else:
+			all_tuple = self.request_again(url)
 		return all_tuple
 
 	#处理502再请求一遍
@@ -401,8 +402,9 @@ class TimeTV(object):
 		try:
 			get_return = urllib2.urlopen(url) #获奖记录
 		except urllib2.HTTPError, e:
-			get_return = urllib2.urlopen(url) #获奖记录
-		
+			get_return = urllib2.urlopen(url) #再请求一次
+		else:
+			get_return = urllib2.urlopen(url) #请求2.0
 		# else:
 		# 	get_return = proxy_request(url)
 
@@ -557,6 +559,8 @@ class TimeTV(object):
 		try:
 			get_return = urllib2.urlopen(url).read()
 		except urllib2.HTTPError, e:
+			get_return = urllib2.urlopen(url).read()
+		else:
 			get_return = urllib2.urlopen(url).read()
 		# else:
 		# print u'返回结果:%s'% response.code
