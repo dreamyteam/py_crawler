@@ -15,9 +15,8 @@ import re
 
 import random
 
-data_info = db.TVInfo.find({'source': 'douban'}).skip(400).limit(200)
 
-class TimeTV(threading.Thread):
+class TimeTV(object):
 
 	def __init__(self, movie_dict, flag):
 
@@ -39,20 +38,6 @@ class TimeTV(threading.Thread):
 				self.info_dict['update_time'] = time.strftime('%Y-%m-%d %H:%M:%S')
 				print u'更新时间:%s' % self.info_dict['update_time']
 				db.TVInfo.update({'movie_url': self.info_dict['movie_url']}, {'$set': self.info_dict}, True)
-
-			print '-------' * 5
-
-	@staticmethod
-	def run_threads(flag):
-
-		threads = list()
-		for i in data_info:
-			thread_1 = TimeTV(i, flag)
-			thread_1.start()
-			threads.append(thread_1)
-
-		for t in threads:
-			t.join()
 
 	#时光网搜索电影
 	def search_movie(self, search_name, movie_time):
@@ -618,5 +603,20 @@ class TimeTV(threading.Thread):
 		return update_dict
 		
 
-TimeTV.run_threads('first')
+
+def run_threads():
+	data_info = db.TVInfo.find({'source': 'douban'}).skip(600).limit(200)
+	count = 0
+	for i in data_info:
+		count += 1
+		print u'第几个:%s' % count
+		TimeTV(i, 'first').run()
+		time.sleep(2)
+		print '-------' * 5
+
+run_threads()
+
+
+
+
 
