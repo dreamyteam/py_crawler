@@ -626,7 +626,7 @@ class TimeTV(object):
 		
 def run_threads():
 
-	data_info = db.TVInfo.find({'source': 'douban'}).skip(1147).limit(500)
+	data_info = db.TVInfo.find({'source': 'douban'}).skip(1149).limit(500)
 	count = 0
 	for i in data_info:
 		count += 1
