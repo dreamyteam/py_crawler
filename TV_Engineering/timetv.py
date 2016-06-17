@@ -112,13 +112,18 @@ class TimeTV(object):
 	def all_return_result(self, time_id, movie_dict):
 		url = 'http://movie.mtime.com/{0}/'.format(time_id)
 		try:
-			all_tuple = self.request_again(url)
-		except urllib2.HTTPError, e:
+			try:
+				all_tuple = self.request_again(url)
+			except urllib2.HTTPError, e:
+				time.sleep(1)
+				all_tuple = self.request_again(url)
+			else:
+				time.sleep(1)
+				all_tuple = self.request_again(url)
+		except urllib2.URLError, e:
 			time.sleep(1)
 			all_tuple = self.request_again(url)
-		else:
-			time.sleep(1)
-			all_tuple = self.request_again(url)
+		
 		return all_tuple
 
 	#处理502再请求一遍
@@ -402,11 +407,15 @@ class TimeTV(object):
 		url = 'http://movie.mtime.com/{0}/awards.html'.format(time_id)
 		# if random.choice(request_list) == 'no':
 		try:
-			get_return = urllib2.urlopen(url) #获奖记录
-		except urllib2.HTTPError, e:
-			time.sleep(1)
-			get_return = urllib2.urlopen(url) #再请求一次
-		else:
+			try:
+				get_return = urllib2.urlopen(url) #获奖记录
+			except urllib2.HTTPError, e:
+				time.sleep(1)
+				get_return = urllib2.urlopen(url) #再请求一次
+			else:
+				time.sleep(1)
+				get_return = urllib2.urlopen(url) #请求2.0
+		except urllib2.URLError, e:
 			time.sleep(1)
 			get_return = urllib2.urlopen(url) #请求2.0
 		# else:
@@ -557,15 +566,20 @@ class TimeTV(object):
 
 	#其余更新部分
 	def update_other_info(self, time_get_id):
+
 		update_dict = dict()
 		url = 'http://service.library.mtime.com/Movie.api?Ajax_CallBack=true&Ajax_CallBackType=Mtime.Library.Services&Ajax_CallBackMethod=GetMovieOverviewRating&Ajax_CrossDomain=1&Ajax_RequestUrl=http%3A%2F%2Fmovie.mtime.com%2F{0}%2F&t=2016671225976913&Ajax_CallBackArgument0={1}'.format(time_get_id, time_get_id)
-		
 		try:
-			get_return = urllib2.urlopen(url).read()
-		except urllib2.HTTPError, e:
-			time.sleep(1)
-			get_return = urllib2.urlopen(url).read()
-		else:
+			
+			try:
+				get_return = urllib2.urlopen(url).read()
+			except urllib2.HTTPError, e:
+				time.sleep(1)
+				get_return = urllib2.urlopen(url).read()
+			else:
+				time.sleep(1)
+				get_return = urllib2.urlopen(url).read()
+		except urllib2.URLError, e:
 			time.sleep(1)
 			get_return = urllib2.urlopen(url).read()
 		# else:
@@ -621,12 +635,12 @@ class TimeTV(object):
 		update_dict['all_long'] = long_comment
 		update_dict['all_short'] = short_comment
 		update_dict['all_news'] = news_times
-		
+
 		return update_dict
 		
 def run_threads():
 
-	data_info = db.TVInfo.find({'source': 'douban'}).skip(1149).limit(500)
+	data_info = db.TVInfo.find({'source': 'douban'}).skip(1665).limit(200)
 	count = 0
 	for i in data_info:
 		count += 1
