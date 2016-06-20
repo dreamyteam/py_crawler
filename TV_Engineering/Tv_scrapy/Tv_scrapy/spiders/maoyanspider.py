@@ -15,7 +15,7 @@ class MaoyanSpider(scrapy.Spider):
 
 	def start_requests(self):
 		
-		get_info = db.TVInfo.find({'source': 'douban'}).skip(500).limit(500)
+		get_info = db.TVInfo.find({'source': 'douban'}).skip(2000)
 
 		for i in get_info:
 
