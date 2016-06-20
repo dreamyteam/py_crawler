@@ -110,6 +110,7 @@ class TimeTV(object):
 			return result_first
 
 	def all_return_result(self, time_id, movie_dict):
+
 		url = 'http://movie.mtime.com/{0}/'.format(time_id)
 		try:
 			try:
@@ -380,9 +381,11 @@ class TimeTV(object):
 						company_list.append(product_dict)
 
 				if sel2.xpath('//*[@id="companyRegion"]/dd/div[1]/div[1]/h4/text()').extract()[0].strip() == u'制作公司':
+
 					add_dict['production_company'] = company_list
-					return add_dict
+					
 					if sel2.xpath('//*[@id="companyRegion"]/dd/div[1]/div[2]/h4/text()'):
+						
 						for i in sel2.xpath('//*[@id="companyRegion"]/dd/div[1]/div[2]/ul/li'):
 							sale_company_name = i.xpath('./a/text()').extract()[0].strip()
 							if i.xpath('./a/@href').extract():
@@ -640,9 +643,11 @@ class TimeTV(object):
 		
 def run_threads():
 
-	data_info = db.TVInfo.find({'source': 'douban'}).skip(1665).limit(200)
+	data_info = db.TVInfo.find({'source': 'douban'}).skip(2085).limit(915)
+	data_list = [i for i in data_info]
+	# data_list = db.TVInfo.find({'source':'douban','Relate_ID':'1292343'})
 	count = 0
-	for i in data_info:
+	for i in data_list:
 		count += 1
 		print u'第几个:%s' % count
 		TimeTV(i, 'first').run()

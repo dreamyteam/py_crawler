@@ -5,7 +5,6 @@ reload(sys)
 sys.setdefaultencoding('utf-8')
 
 from configfile import *
-import threading
 import urllib2
 import bson
 from scrapy.selector import Selector
@@ -13,13 +12,10 @@ import time
 import re
 
 
-data = db.TVInfo.find({'source': 'douban'}).skip(600).limit(300)
-
-class ImdbTV(threading.Thread):
+class ImdbTV(object):
 
 	def __init__(self, movie_dict, flag):
 
-		threading.Thread.__init__(self)
 		self.info_dict = data_formate()
 		self.movie_dict = movie_dict
 		self.flag = flag
@@ -32,10 +28,10 @@ class ImdbTV(threading.Thread):
 			self.imdb_info(all_sel[0], all_sel[1])
 			# 上映时间和别名
 			self.info_dict.update(self.release_info(all_sel[2]))
-			for i in self.info_dict['release_info']:
-				print u'地区:', i[0], '\t', u'时间:', i[1]
-			for i in self.info_dict['other_name']:
-				print u'别名:%s' % i
+			# for i in self.info_dict['release_info']:
+			# 	# print u'地区:', i[0], '\t', u'时间:', i[1]
+			# for i in self.info_dict['other_name']:
+				# print u'别名:%s' % i
 
 			#制作公司和发行公司
 			self.info_dict.update(self.company_info(all_sel[3]))
@@ -47,33 +43,23 @@ class ImdbTV(threading.Thread):
 		db.TVInfo.update({'movie_url': self.info_dict['movie_url']}, {'$set': self.info_dict}, True)
 		print '----------' * 5
 
-	@staticmethod
-	def run_threads(flag):
-
-		threads = list()
-		for i in data:
-			if i['IMDB_ID']:
-				thread_1 = ImdbTV(i, flag)
-				thread_1.start()
-				threads.append(thread_1)
-
-		for t in threads:
-			t.join()
+	
 			
 	def all_return_body(self):
+		
 		ttid = self.movie_dict['IMDB_ID']
 		#基本信息页面
 		url1 = 'http://www.imdb.com/title/{0}/'.format(ttid,)
-		sel1 = Selector(text=proxy_request(url1))
+		sel1 = Selector(text=proxy_request(url1).read())
 		#上映信息页面
 		url2 = 'http://www.imdb.com/title/{0}/releaseinfo'.format(ttid,)
-		sel2 = Selector(text=proxy_request(url2))
+		sel2 = Selector(text=proxy_request(url2).read())
 		#制作公司和发行公司
 		url3 = 'http://www.imdb.com/title/{0}/companycredits'.format(ttid,)
-		sel3 = Selector(text=proxy_request(url3))
+		sel3 = Selector(text=proxy_request(url3).read())
 		#职员
 		url4 = 'http://www.imdb.com/title/{0}/fullcredits'.format(ttid,)
-		sel4 = Selector(text=proxy_request(url4))
+		sel4 = Selector(text=proxy_request(url4).read())
 		return (url1, sel1, sel2, sel3, sel4)
 
 	def imdb_info(self, url, sel):
@@ -117,7 +103,7 @@ class ImdbTV(threading.Thread):
 				description = sel.xpath('//*[@id="titleStoryLine"]//*[@itemprop="description"]/p/text()').extract()[0].strip()
 			else:
 				description = ''
-			print u'简介:%s' % description
+			# print u'简介:%s' % description
 			print '\n'
 			self.info_dict['introduce'].append(description)
 
@@ -189,7 +175,7 @@ class ImdbTV(threading.Thread):
 								'name': company,
 								'url': company_url,
 							}
-				print u'制作公司:%s' % company
+				# print u'制作公司:%s' % company
 				self.info_dict['production_company'].append(company_dict)
 
 		is_distributors = sel.xpath('//*[@id="distributors"]')
@@ -198,7 +184,7 @@ class ImdbTV(threading.Thread):
 			for i in sel.xpath('//*[@id="company_credits_content"]/ul[2]/li'):
 				name = i.xpath('./a/text()').extract()[0].strip()
 				name_url = 'http://www.imdb.com' + i.xpath('./a/@href').extract()[0].strip()
-				print u'发行公司:%s' % name
+				# print u'发行公司:%s' % name
 				distributors_dict = {
 										'name': name,
 										'url': name_url
@@ -236,7 +222,7 @@ class ImdbTV(threading.Thread):
 										'url': staff_name_url
 									}
 
-						print u'名称:{0}\t 名字:{1}'.format(IMDB_staff_list[j], staff_name)
+						# print u'名称:{0}\t 名字:{1}'.format(IMDB_staff_list[j], staff_name)
 						add_list.append(staff_dict)
 
 			self.info_dict[j] = add_list
@@ -256,14 +242,14 @@ class ImdbTV(threading.Thread):
 									'name': actor,
 									'url': actor_url
 								}
-					print u'演员:%s' % actor
+					# print u'演员:%s' % actor
 					character = ''
 					if i.xpath('.//*[@class="character"]'):
 						if i.xpath('.//*[@class="character"]/div/a'):
 							character = i.xpath('.//*[@class="character"]/div/a/text()').extract()[0].strip()
 						elif i.xpath('.//*[@class="character"]/div'):
 							character = i.xpath('.//*[@class="character"]/div/text()').extract()[0].strip()
-						print u'角色:%s' % character
+						# print u'角色:%s' % character
 					actor_charactor.append([actor_dict, character])
 		self.info_dict['actor_charactor'] = actor_charactor
 		
@@ -276,10 +262,10 @@ class ImdbTV(threading.Thread):
 		#获奖提名记录
 		url = 'http://www.imdb.com/title/{0}/awards'.format(ttid,)
 		print u'获奖的URL:%s' % url
-		sel = Selector(text=proxy_request(url))
+		sel = Selector(text=proxy_request(url).read())
 		url2 = 'http://www.imdb.com/title/{0}/'.format(ttid,)
 		self.info_dict['movie_url'] = url2
-		sel2 = Selector(text=proxy_request(url2))
+		sel2 = Selector(text=proxy_request(url2).read())
 		if sel.xpath('//*[@class="desc"]'):
 			#次数
 			r = sel.xpath('//*[@class="desc"]/text()').extract()[0].strip().split(' ')
@@ -294,7 +280,7 @@ class ImdbTV(threading.Thread):
 				except Exception, e:
 					self.info_dict['nominations'] = int(r[r.index('nomination')-1])
 
-		print u'获奖：{0}****提名：{1}'.format(self.info_dict['wins'], self.info_dict['nominations'])
+		# print u'获奖：{0}****提名：{1}'.format(self.info_dict['wins'], self.info_dict['nominations'])
 
 		#信息
 		all_award_body = sel.xpath('//*[@class="article listo"]/h3')
@@ -366,7 +352,7 @@ class ImdbTV(threading.Thread):
 				for x in range(1, int(rowspan_list[0]) + 1):
 					
 					name = sel.xpath('//*[@class="article listo"]/table[{0}]//*[@class="award_description"][{1}]/text()'.format(i, x)).extract()[0].strip()
-					print u'第一项名称:%s' % name
+					# print u'第一项名称:%s' % name
 					name_actor_list = sel.xpath('//*[@class="article listo"]/table[{0}]//*[@class="award_description"][{1}]/a'.format(i, x))
 					name_actor = list()
 					if name_actor_list:
@@ -382,7 +368,7 @@ class ImdbTV(threading.Thread):
 				#第二项
 				for x in range(int(rowspan_list[0]) + 1, int(rowspan_list[0]) + 1 + int(rowspan_list[1])):
 					name = sel.xpath('//*[@class="article listo"]/table[{0}]//*[@class="award_description"][{1}]/text()'.format(i, x)).extract()[0].strip()
-					print u'第二项名称:%s' % name
+					# print u'第二项名称:%s' % name
 					name_actor_list = sel.xpath('//*[@class="article listo"]/table[{0}]//*[@class="award_description"][{1}]/a'.format(i, x))
 					name_actor = list()
 					if name_actor_list:
@@ -423,7 +409,6 @@ class ImdbTV(threading.Thread):
 
 		print u'长评人数:%s' % self.info_dict['all_long']
 		
-
 		rank_list = sel2.xpath('//*[@class="titleReviewBarSubItem"]')
 		rank = 0
 		if rank_list:
@@ -436,16 +421,24 @@ class ImdbTV(threading.Thread):
 							mm = com.group()
 							rank = rank.replace(mm, mm.replace(",", ""))
 						rank = int(rank)
-						print u'排名:%s' % rank
+						# print u'排名:%s' % rank
 
 		self.info_dict['rank'] = rank
 		self.info_dict['update_time'] = time.strftime('%Y-%m-%d %H:%M:%S')
 		return self.info_dict
 
-ImdbTV.run_threads('first')
+def run_threads():
 
+	count = 0
+	data = db.TVInfo.find({'source': 'douban'}).skip(2710).limit(290)
+	data_list = [i for i in data]
+	for i in data_list:
+		count += 1
+		print u'第几个:%s' % count
+		if i['IMDB_ID']:
+			ImdbTV(i, 'first').run()
 
-
+run_threads()
 
 
 

@@ -191,6 +191,7 @@ class DoubanTV(object):
 			if is_introduce:
 				introduce= sel.xpath('//*[@id="link-report"]//*[@property="v:summary"]/text()').extract()
 				self.info_dict['introduce'].extend(is_introduce)
+
 		# for i in is_introduce:
 		# 	print u'简介:%s' % i
 
@@ -246,8 +247,9 @@ class DoubanTV(object):
 def run_threads():
 
 	count = 0
-	data = db.DoubanTagID.find().skip(13000).limit(2000)
-	for i in data:
+	data = db.DoubanTagID.find().skip(14700).limit(5300)
+	data_list = [i for i in data]
+	for i in data_list:
 		count += 1
 		print u'第几个:%s' % count
 		time.sleep(2)
