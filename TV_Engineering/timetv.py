@@ -609,7 +609,7 @@ class TimeTV(object):
 				update_dict['average'] = 0
 				update_dict['votes'] = 0
 				update_dict['rank'] = 0
-
+				
 
 		print u'评分:%s' % update_dict['average']
 		print u'评分人数:%s' % update_dict['votes']
