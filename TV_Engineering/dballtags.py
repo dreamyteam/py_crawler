@@ -28,7 +28,7 @@ class DoubanTags(object):
 	def parse(self, tag_name, page):
 
 		url = 'https://movie.douban.com/tag/{0}?start={1}&type=T'.format(tag_name.encode('utf-8'), page)
-		is_which = random.choice(request_list)
+		# is_which = random.choice(request_list)
 		# if is_which == 'proxy':
 		# response = proxy_request(url)
 		# else:
@@ -61,7 +61,7 @@ class DoubanTags(object):
 
 			is_next = sel.xpath('//*[@rel="next"]')
 			page += 20
-			time.sleep(3)
+			time.sleep(2)
 			return self.parse(tag_name, page)
 
 def run_threads():
@@ -70,7 +70,7 @@ def run_threads():
 		count += 1
 		print u'第%s个标签:%s' % (count, i)
 		DoubanTags(i).run()
-		time.sleep(5)
+		time.sleep(2)
 
 run_threads()
 
