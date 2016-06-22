@@ -28,7 +28,10 @@ class Dmzj(object):
 	def run(self):
 		
 		if self.flag == 'first':
-			self.base_info()
+			if 'http://manhua.' in self.movie_dict['url']:
+				self.base_info()
+			elif 'http://www.' in self.movie_dict['url']:
+				self.base_info_2()
 
 		db.CartoonInfo.update({'url': self.info_dict['url']}, {'$set': self.info_dict}, True)
 	
@@ -98,10 +101,18 @@ class Dmzj(object):
 			# print u'状态:%s' % a_status
 			self.info_dict['relate_info'].append([animation, a_status])
 
+	def base_info_2(self):
+		pass
+
+
+
+
+
+
 
 def run_threads():
 
-	mongo_data = db.CartoonSource.find({'source':'dmzj','url':{'$regex':'http://www.'}}).skip(0).limit(1)
+	mongo_data = db.CartoonSource.find({'source':'dmzj','url':{'$regex':'http://manhua.'}})
 	mongo_data = [i for i in mongo_data]
 	count = 0
 	for i in mongo_data:
