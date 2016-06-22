@@ -29,17 +29,17 @@ class Dmzj(object):
 		db.CartoonInfo.update({'url': self.info_dict['url']}, {'$set': self.info_dict}, True)
 	
 	def base_info(self):
-		response = urllib2.urlopen(self.movie_dict['url'])
+		response = proxy_request(self.movie_dict['url'])
 		sel = Selector(text=response.read())
 
 		self.info_dict['source'] = 'dmzj'
 		# print u'来源:%s' % self.info_dict['source']
 
 		self.info_dict['url'] = response.url
-		print u'URL:%s' % self.info_dict['url']
+		# print u'URL:%s' % self.info_dict['url']
 
 		self.info_dict['name'] = self.movie_dict['title']
-		print u'名称:%s' % self.info_dict['name']
+		# print u'名称:%s' % self.info_dict['name']
 
 		self.info_dict['author'] = self.movie_dict['author']
 		# print u'作者:%s' % self.info_dict['author']
@@ -70,7 +70,7 @@ class Dmzj(object):
 		self.info_dict['introduce'] = sel.xpath('//*[@class="line_height_content"]/text()').extract()[0].strip()
 		# print self.info_dict['introduce']
 		
-		res = urllib2.urlopen('http://manhua.dmzj.com/hits/{0}.json'.format(self.movie_dict['js_id']))
+		res = proxy_request('http://manhua.dmzj.com/hits/{0}.json'.format(self.movie_dict['js_id']))
 		json_data = json.loads(res.read())
 		if 'hot_hits' in json_data:
 			self.info_dict['popular'] = json_data['hot_hits']
@@ -80,7 +80,7 @@ class Dmzj(object):
 		# print u'订阅人数:%s' % self.info_dict['rss_num']
 
 		comment_url = 'http://interface.dmzj.com/api/NewComment2/total?callback=s_0&&type=4&obj_id={0}&countType=1&authorId=&_=1466496505642'.format(self.movie_dict['js_id'],)
-		comment_res = urllib2.urlopen(comment_url)
+		comment_res = proxy_request(comment_url)
 		re_result = re.findall(r'("data":)(.*?)(})', comment_res.read())
 		
 		if re_result:
@@ -97,11 +97,12 @@ class Dmzj(object):
 
 def run_threads():
 
-	mongo_data = db.CartoonSource.find({'source': 'dmzj'}).skip(0).limit(200)
+	mongo_data = db.CartoonSource.find({'source':'dmzj','url':{'$regex':'http://manhua'}})
 	mongo_data = [i for i in mongo_data]
 	count = 0
 	for i in mongo_data:
-		# print i
+		print i['title']
+		print i['url']
 		count += 1
 		print u'第几个:%s' % count
 		Dmzj(i, 'first').run()
