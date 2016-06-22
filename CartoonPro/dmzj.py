@@ -28,7 +28,6 @@ class Dmzj(object):
 
 		db.CartoonInfo.update({'url': self.info_dict['url']}, {'$set': self.info_dict}, True)
 	
-
 	def base_info(self):
 		response = urllib2.urlopen(self.movie_dict['url'])
 		sel = Selector(text=response.read())
@@ -37,10 +36,10 @@ class Dmzj(object):
 		# print u'来源:%s' % self.info_dict['source']
 
 		self.info_dict['url'] = response.url
-		# print u'URL:%s' % self.info_dict['url']
+		print u'URL:%s' % self.info_dict['url']
 
 		self.info_dict['name'] = self.movie_dict['title']
-		# print u'名称:%s' % self.info_dict['name']
+		print u'名称:%s' % self.info_dict['name']
 
 		self.info_dict['author'] = self.movie_dict['author']
 		# print u'作者:%s' % self.info_dict['author']
@@ -96,17 +95,18 @@ class Dmzj(object):
 			self.info_dict['relate_info'].append([animation, a_status])
 
 
-
 def run_threads():
 
-	mongo_data = db.CartoonSource.find({'source': 'dmzj'})
+	mongo_data = db.CartoonSource.find({'source': 'dmzj'}).skip(0).limit(200)
 	mongo_data = [i for i in mongo_data]
-
+	count = 0
 	for i in mongo_data:
 		# print i
+		count += 1
+		print u'第几个:%s' % count
 		Dmzj(i, 'first').run()
 		time.sleep(2)
-		# print '*******' * 5
+		print '*******' * 5
 
 run_threads()
 
