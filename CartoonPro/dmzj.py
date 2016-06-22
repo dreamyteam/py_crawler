@@ -1,0 +1,117 @@
+# -*- coding: utf-8 -*-
+
+from scrapy.selector import Selector
+import urllib2
+import time
+import json
+import re
+
+import pymongo 
+client = pymongo.MongoClient('112.74.106.159', 27017)
+db = client.CartoonData
+from cartoonconfig import *
+
+
+class Dmzj(object):
+
+	def __init__(self, movie_dict, flag):
+
+		self.info_dict = dmzj()
+		self.movie_dict = movie_dict
+		self.flag = flag
+		
+
+	def run(self):
+		
+		if self.flag == 'first':
+			self.base_info()
+
+		db.CartoonInfo.update({'url': self.info_dict['url']}, {'$set': self.info_dict}, True)
+	
+
+	def base_info(self):
+		response = urllib2.urlopen(self.movie_dict['url'])
+		sel = Selector(text=response.read())
+
+		self.info_dict['source'] = 'dmzj'
+		# print u'来源:%s' % self.info_dict['source']
+
+		self.info_dict['url'] = response.url
+		# print u'URL:%s' % self.info_dict['url']
+
+		self.info_dict['name'] = self.movie_dict['title']
+		# print u'名称:%s' % self.info_dict['name']
+
+		self.info_dict['author'] = self.movie_dict['author']
+		# print u'作者:%s' % self.info_dict['author']
+
+		self.info_dict['c_ticai'] = self.movie_dict['c_ticai']
+		# print u'题材:%s' % self.info_dict['c_ticai']
+
+		self.info_dict['scrapy_time'] = time.strftime('%Y-%m-%d %H:%M:%S')
+		# print u'抓取时间:%s' % self.info_dict['scrapy_time']
+		self.info_dict['img_url'] = sel.xpath('//*[@ class="anim_intro_ptext"]/a/img/@src').extract()[0].strip()
+		# print u'图片地址:%s' % self.info_dict['img_url']
+
+		for i in sel.xpath('//*[@ class="anim-main_list"]/table/tr'):
+			is_name = i.xpath('./th/text()').extract()[0].strip()
+			if is_name in dmzj_dict:
+				if is_name != u'最新收录：':
+
+					if i.xpath('./td/a/text()').extract():
+						self.info_dict[dmzj_dict[is_name]] = i.xpath('./td/a/text()').extract()[0].strip()
+					else:
+						if i.xpath('./td/text()').extract():
+							self.info_dict[dmzj_dict[is_name]] = i.xpath('./td/text()').extract()[0].strip()
+					# print is_name, self.info_dict[dmzj_dict[is_name]]
+				else:
+					self.info_dict['update_time'] = i.xpath('./td/span/text()').extract()[0]
+					# print is_name, self.info_dict['update_time']
+
+		self.info_dict['introduce'] = sel.xpath('//*[@class="line_height_content"]/text()').extract()[0].strip()
+		# print self.info_dict['introduce']
+		
+		res = urllib2.urlopen('http://manhua.dmzj.com/hits/{0}.json'.format(self.movie_dict['js_id']))
+		json_data = json.loads(res.read())
+		if 'hot_hits' in json_data:
+			self.info_dict['popular'] = json_data['hot_hits']
+		# print u'人气:%s' % self.info_dict['popular']
+		if 'sub_amount' in json_data:
+			self.info_dict['rss_num'] = json_data['sub_amount']
+		# print u'订阅人数:%s' % self.info_dict['rss_num']
+
+		comment_url = 'http://interface.dmzj.com/api/NewComment2/total?callback=s_0&&type=4&obj_id={0}&countType=1&authorId=&_=1466496505642'.format(self.movie_dict['js_id'],)
+		comment_res = urllib2.urlopen(comment_url)
+		re_result = re.findall(r'("data":)(.*?)(})', comment_res.read())
+		
+		if re_result:
+			self.info_dict['all_comments'] = re_result[0][1]
+		# print u'所有评论:%s' %  self.info_dict['all_comments']
+		is_relate = sel.xpath('//*[@ class="anim_data_mnew about-info"]//ul/li')
+		if is_relate:
+			animation = sel.xpath('//*[@ class="anim_data_mnew about-info"]//ul/li/a/strong/text()').extract()[0].strip()
+			# print u'动画:%s' % animation
+			a_status = sel.xpath('//*[@ class="anim_data_mnew about-info"]//ul/li/span/text()').extract()[0].strip()
+			# print u'状态:%s' % a_status
+			self.info_dict['relate_info'].append([animation, a_status])
+
+
+
+def run_threads():
+
+	mongo_data = db.CartoonSource.find({'source': 'dmzj'})
+	mongo_data = [i for i in mongo_data]
+
+	for i in mongo_data:
+		# print i
+		Dmzj(i, 'first').run()
+		time.sleep(2)
+		# print '*******' * 5
+
+run_threads()
+
+
+
+
+
+
