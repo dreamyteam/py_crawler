@@ -7,6 +7,37 @@ db1 = client.develop
 USER_AGENTS = [i['userAgent'] for i in db1.userAgents.find()]
 
 
+#动漫屋配置信息
+dm5_dict = {
+
+			'area': u'漫画地区：',
+			'author': u'漫画作者：',
+			'c_type': u'漫画类型：',
+			'popular': u'漫画人气：',
+			'status': u'漫画状态：',
+			'update_time': u'更新时间：',
+		}
+#动漫之家配置信息
+dmzj_dict = {
+
+				u'地域：': 'area',
+				u'分类：': 'c_type',
+				u'状态：': 'status',
+				u'最新收录：': 'update_time',
+				u'别名：': 'other_name',
+		}
+
+
+#有妖气配置信息
+u17_dict = {
+				u'类别：': 'c_leibie',
+				u'类型：': 'c_leixing',
+				u'状态：': 'status',
+				# u'总点击：': 'all_click',
+				# u'总月票：': 'all_tickts',
+		}
+
+
 # Scrapy settings for Cartoon_scrapy project
 #
 # For simplicity, this file contains only settings considered important or
@@ -26,7 +57,7 @@ NEWSPIDER_MODULE = 'Cartoon_scrapy.spiders'
 #USER_AGENT = 'Cartoon_scrapy (+http://www.yourdomain.com)'
 
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
-CONCURRENT_REQUESTS=32
+CONCURRENT_REQUESTS=64
 
 # Configure a delay for requests for the same website (default: 0)
 # See http://scrapy.readthedocs.org/en/latest/topics/settings.html#download-delay

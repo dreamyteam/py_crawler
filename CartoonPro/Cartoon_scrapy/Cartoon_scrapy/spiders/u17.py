@@ -50,7 +50,7 @@ class USpider(scrapy.Spider):
 		try:
 			item['img_url'] = sel.xpath('//*[@ id="cover"]/a/img/@src').extract()[0].strip()
 			# print u'图片链接:%s' % item['img_url']
-			item['img_data'] = bson.Binary(urllib2.urlopen(item['img_url']).read())
+			# item['img_data'] = bson.Binary(urllib2.urlopen(item['img_url']).read())
 		except Exception, e:
 			item['return_status'] = 'pass'
 			return item

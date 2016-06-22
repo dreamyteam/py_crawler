@@ -7,7 +7,7 @@ from Cartoon_scrapy.settings import *
 import bson
 import urllib2
 import time
-class Dm5SourceSpider(scrapy.Spider):
+class Dm5Spider(scrapy.Spider):
 
 
 	name = "dm5_info"
@@ -32,7 +32,7 @@ class Dm5SourceSpider(scrapy.Spider):
 	 	else:
 	 		item['other_name'] = ''
 	 	item['img_url'] = sel.xpath('//*[@ style=" margin-right:20px"]/img/@src').extract()[0].strip()
-	 	item['img_data'] = bson.Binary(urllib2.urlopen(item['img_url']).read())
+	 	# item['img_data'] = bson.Binary(urllib2.urlopen(item['img_url']).read())
 	 	item['area'] = str()
 	 	item['author'] = str()
 	 	item['c_type'] = str()

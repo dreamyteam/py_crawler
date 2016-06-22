@@ -47,6 +47,7 @@ class DmzjSpider(scrapy.Spider):
 		item['area'] = str()
 		item['all_theme'] = str()
 		item['all_response'] = str()
+		item['all_comments'] = str()
 		item['author'] = response.meta['author']
 		# print u'作者:%s' % item['author']
 
@@ -61,7 +62,7 @@ class DmzjSpider(scrapy.Spider):
 		item['scrapy_time'] = time.strftime('%Y-%m-%d %H:%M:%S')
 		# print u'抓取时间:%s' % item['scrapy_time']
 		item['img_url'] = sel.xpath('//*[@ class="anim_intro_ptext"]/a/img/@src').extract()[0].strip()
-		item['img_data'] = bson.Binary(urllib2.urlopen(item['img_url']).read())
+		# item['img_data'] = bson.Binary(urllib2.urlopen(item['img_url']).read())
 		# print u'图片地址:%s' % item['img_url']
 
 		for i in sel.xpath('//*[@ class="anim-main_list"]/table/tr'):
@@ -91,8 +92,9 @@ class DmzjSpider(scrapy.Spider):
 		comment_url = 'http://interface.dmzj.com/api/NewComment2/total?callback=s_0&&type=4&obj_id={0}&countType=1&authorId=&_=1466496505642'.format(response.meta['js_id'],)
 		comment_res = urllib2.urlopen(comment_url)
 		re_result = re.findall(r'("data":)(.*?)(})', comment_res.read())
+		
 		if re_result:
-			item['all_theme'] = re_result[0][1]
+			item['all_comments'] = re_result[0][1]
 		# print item['all_theme']
 		
 		return item
