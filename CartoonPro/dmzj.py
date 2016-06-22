@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 
+import sys
+reload(sys)
+sys.setdefaultencoding('utf-8')
+
 from scrapy.selector import Selector
 import urllib2
 import time
@@ -97,14 +101,14 @@ class Dmzj(object):
 
 def run_threads():
 
-	mongo_data = db.CartoonSource.find({'source':'dmzj','url':{'$regex':'http://manhua'}})
+	mongo_data = db.CartoonSource.find({'source':'dmzj','url':{'$regex':'http://www.'}}).skip(0).limit(1)
 	mongo_data = [i for i in mongo_data]
 	count = 0
 	for i in mongo_data:
-		print i['title']
-		print i['url']
+		# print i['title']
+		# print i['url']
 		count += 1
-		print u'第几个:%s' % count
+		# print u'第几个:%s' % count
 		Dmzj(i, 'first').run()
 		time.sleep(2)
 		print '*******' * 5
