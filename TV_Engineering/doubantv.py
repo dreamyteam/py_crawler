@@ -64,7 +64,7 @@ class DoubanTV(object):
 		# print u'影片图片地址:***%s' % self.info_dict['img_url']
 		
 		#线上服务器的时候讲图片保存成文件存在disk中。
-		self.info_dict['img_data'] = bson.Binary(urllib2.urlopen(self.info_dict['img_url']).read())
+		# self.info_dict['img_data'] = bson.Binary(urllib2.urlopen(self.info_dict['img_url']).read())
 		
 		#1电影名称和年份
 		all_name = sel.xpath('//*[@property="v:itemreviewed"]/text()').extract()[0].strip()
@@ -250,7 +250,7 @@ class DoubanTV(object):
 def run_threads():
 
 	count = 0
-	data = db.DoubanTagID.find().skip(30000)
+	data = db.DoubanTagID.find().skip(31897)
 	data_list = [i for i in data]
 	for i in data_list:
 		count += 1
