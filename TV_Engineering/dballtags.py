@@ -66,7 +66,7 @@ class DoubanTags(object):
 
 def run_threads():
 	count = 0
-	for i in data['tag_list'][100:]:
+	for i in data['tag_list'][1100:]:
 		count += 1
 		print u'第%s个标签:%s' % (count, i)
 		DoubanTags(i).run()

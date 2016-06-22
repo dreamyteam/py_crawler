@@ -158,8 +158,11 @@ class DoubanTV(object):
 		try:
 			is_editor = sel.xpath('//div[@id="info"]/span[2]/span[1]/text()').extract()[0].strip()
 		except Exception, e:
-			is_editor = sel.xpath('//div[@id="info"]/span[2]/text()').extract()[0].strip()
-		
+			is_editor = sel.xpath('//div[@id="info"]/span[2]/text()').extract()
+			if is_editor:
+				is_editor = sel.xpath('//div[@id="info"]/span[2]/text()').extract()[0].strip()
+			else:
+				is_editor = str()		
 		if is_editor == u'编剧':
 			for edi in sel.xpath('//div[@id="info"]/span[2]/span[2]/a'):
 				editor = edi.xpath('./text()').extract()[0].strip()
@@ -247,7 +250,7 @@ class DoubanTV(object):
 def run_threads():
 
 	count = 0
-	data = db.DoubanTagID.find().skip(14700).limit(5300)
+	data = db.DoubanTagID.find().skip(30000)
 	data_list = [i for i in data]
 	for i in data_list:
 		count += 1
@@ -255,7 +258,7 @@ def run_threads():
 		time.sleep(2)
 		DoubanTV(i, 'first').run()
 		print '********' * 5
-
+		
 run_threads()
 
 
