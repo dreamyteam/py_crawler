@@ -250,14 +250,15 @@ class DoubanTV(object):
 def run_threads():
 
 	count = 0
-	data = db.DoubanTagID.find().skip(31897)
+	data = db.DoubanTagID.find().skip(39381)
 	data_list = [i for i in data]
+
 	for i in data_list:
 		count += 1
-		print u'第几个:%s' % count
+		# print u'第几个:%s' % count
 		time.sleep(2)
 		DoubanTV(i, 'first').run()
-		print '********' * 5
+		# print '********' * 5
 		
 run_threads()
 
