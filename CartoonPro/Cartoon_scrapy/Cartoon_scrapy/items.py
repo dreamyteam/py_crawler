@@ -84,10 +84,6 @@ class DmzjInfo(scrapy.Item):
 	rss_num = scrapy.Field()
 	
 
-
-
-
-
 class UInfo(scrapy.Item):
 	#一次性
 	#动漫源
@@ -133,7 +129,9 @@ class UInfo(scrapy.Item):
 	return_status = scrapy.Field()#返回状态 有不存在的情况 pass
 
 class AcqqInfo(scrapy.Item):
-	#一次性
+	#一次性	
+	#唯一标识
+	c_id = scrapy.Field()
 
 	#动漫源
 	source = scrapy.Field()
@@ -187,7 +185,18 @@ class AcqqInfo(scrapy.Item):
 	#今日月票
 	today_tickts = scrapy.Field()
 
-	
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

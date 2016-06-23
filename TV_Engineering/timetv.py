@@ -165,10 +165,10 @@ class TimeTV(object):
 
 		#0 电影图片
 		img_url = tuple_list[1].xpath('//*[@id="db_head"]//img/@src').extract()[0].strip()
-		img_data = bson.Binary(urllib2.urlopen(img_url).read())
+		# img_data = bson.Binary(urllib2.urlopen(img_url).read())
 		update_dict['img_url'] = img_url
 		print u'图片链接:%s' % update_dict['img_url']
-		update_dict['img_data'] = img_data
+		# update_dict['img_data'] = img_data
 
 		#1 电影名称
 		update_dict['movie_name'] = tuple_list[1].xpath('//*[@property="v:itemreviewed"]/text()').extract()[0].strip()
@@ -210,16 +210,24 @@ class TimeTV(object):
 				# print u'影片类型:%s' % movie_type
 				update_dict['film_type'].append(movie_type)
 
+
 		#7/8 简介和IMDB编号
 		is_introduce = tuple_list[3].xpath('//*[@class="plots_box"]')
 		update_dict['introduce'] = list()
 		if is_introduce:
-			for i in is_introduce:
-				introduce1 = i.xpath('.//*[@class="first_letter"]/text()').extract()[0].strip()
-				introduce_list = i.xpath('./div[2]//p/text()').extract()
-				introduce2 = ''.join(introduce_list)
-				# print u'简介:{0}{1}'.format(introduce1, introduce2)
-				update_dict['introduce'].append(introduce1+introduce2)
+			try:
+				for i in is_introduce:
+					introduce1 = i.xpath('.//*[@class="first_letter"]/text()').extract()[0].strip()
+					introduce_list = i.xpath('./div[2]//p/text()').extract()
+					introduce2 = ''.join(introduce_list)
+					# print u'简介:{0}{1}'.format(introduce1, introduce2)
+					update_dict['introduce'].append(introduce1+introduce2)
+			except Exception, e:
+				update_dict['introduce'] = tuple_list[3].xpath('//*[@class="plots_box"]//*[@id="lblContent"]/p/text()').extract()
+				# for i in update_dict['introduce']:
+				# 	print i
+
+
 
 		#10 制作国家/地区	
 		is_info_l = tuple_list[1].xpath('//*[@pan="M14_Movie_Overview_BaseInfo"]')
@@ -368,7 +376,11 @@ class TimeTV(object):
 		if len(sel2.xpath('//*[@id="companyRegion"]/dd/div[1]/div')) <= 2:
 			if sel2.xpath('//*[@id="companyRegion"]/dd/div[1]/div[1]/ul/li'):
 				for i in sel2.xpath('//*[@id="companyRegion"]/dd/div[1]/div[1]/ul/li'):
-						company_name = i.xpath('./a/text()').extract()[0].strip()
+						company_name = i.xpath('./a/text()').extract()
+						if company_name:
+							company_name = i.xpath('./a/text()').extract()[0].strip()
+						else:
+							company_name = ''
 						if i.xpath('./a/@href').extract():
 							company_url = i.xpath('./a/@href').extract()[0].strip()
 						else:
@@ -387,7 +399,11 @@ class TimeTV(object):
 					if sel2.xpath('//*[@id="companyRegion"]/dd/div[1]/div[2]/h4/text()'):
 						
 						for i in sel2.xpath('//*[@id="companyRegion"]/dd/div[1]/div[2]/ul/li'):
-							sale_company_name = i.xpath('./a/text()').extract()[0].strip()
+							sale_company_name = i.xpath('./a/text()').extract()
+							if sale_company_name:
+								sale_company_name = i.xpath('./a/text()').extract()[0].strip()
+							else:
+								sale_company_name = ''
 							if i.xpath('./a/@href').extract():
 								sale_company_url = i.xpath('./a/@href').extract()[0].strip()
 							else:
@@ -399,6 +415,8 @@ class TimeTV(object):
 										}
 							distributors_list.append(sale_dict)
 						add_dict['distributors'] = distributors_list
+						return add_dict
+					else:
 						return add_dict
 				else:
 					add_dict['distributors'] = company_list
@@ -609,11 +627,11 @@ class TimeTV(object):
 				update_dict['average'] = 0
 				update_dict['votes'] = 0
 				update_dict['rank'] = 0
-				
 
 		print u'评分:%s' % update_dict['average']
 		print u'评分人数:%s' % update_dict['votes']
 		print u'排名:%s' % update_dict['rank']
+
 		comment_url = 'http://movie.mtime.com/{0}/comment.html'.format(time_get_id,)
 		sel = Selector(text=urllib2.urlopen(comment_url).read())
 		if sel.xpath('//*[@class="details_nav"]/ul/li[1]/a/text()').extract():
@@ -629,6 +647,7 @@ class TimeTV(object):
 			else:
 				long_comment = str()
 				short_comment = str()
+
 		print u'长影评:%s' % long_comment
 		print u'短影评:%s' % short_comment
 		news_url = 'http://movie.mtime.com/{0}/'.format(time_get_id,)
@@ -641,11 +660,13 @@ class TimeTV(object):
 
 		return update_dict
 		
-def run_threads():
 
-	data_info = db.TVInfo.find({'source': 'douban'}).skip(2085).limit(915)
+def run_threads():
+	
+	data_info = db.TVInfo.find({'source': 'douban'}).skip(6205).limit(200)
 	data_list = [i for i in data_info]
 	# data_list = db.TVInfo.find({'source':'douban','Relate_ID':'1292343'})
+
 	count = 0
 	for i in data_list:
 		count += 1

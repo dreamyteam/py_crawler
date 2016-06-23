@@ -54,7 +54,7 @@ def base_info(sel, url):
 	# print u'影片图片地址:***%s' % info_dict['img_url']
 
 	info_dict['img_data'] = bson.Binary(urllib2.urlopen(info_dict['img_url']).read())
-
+	
 	#1电影名称和年份
 	info_dict['movie_name'] = sel.xpath('//*[@property="v:itemreviewed"]/text()').extract()[0].strip()
 	print u'影片名称:****%s' % info_dict['movie_name']
@@ -86,8 +86,6 @@ def base_info(sel, url):
 			info_dict['introduce'].extend(is_introduce)
 	for i in is_introduce:
 		print i
-
-
 
 	#9主演
 	is_main_actor = sel.xpath('//*[@rel="v:starring"]')

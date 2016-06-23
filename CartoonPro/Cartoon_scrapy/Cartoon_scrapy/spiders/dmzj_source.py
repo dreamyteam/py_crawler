@@ -13,7 +13,7 @@ class DmzjSpider(scrapy.Spider):
 				)
 
 	def parse(self, response):
-
+		
 		now_url = response.url
 		print u'当前URL:%s' % now_url
 		re_result = re.findall(r'(search.renderResult)(.*?)(;)', response.body)
@@ -23,9 +23,10 @@ class DmzjSpider(scrapy.Spider):
 		for i in range(1, all_pages+1):
 			request_url = 'http://s.acg.178.com/mh/index.php?c=category&m=doSearch&status=0&reader_group=0&zone=0&initial=all&type=0&p={0}&callback=search.renderResult&_=1466475447527'.format(i, )
 			yield scrapy.FormRequest( request_url, dont_filter=True, callback=self.get_tags)
-
+			
 	def get_tags(self, response):
-	# 	print response.url
+		
+		# print response.url
 		item = CartoonSourceItem()
 		re_result = re.findall(r'(search.renderResult)(.*?)(;)', response.body)
 		json_data = json.loads(re_result[0][1][1:-1])
@@ -33,8 +34,14 @@ class DmzjSpider(scrapy.Spider):
 		for i in json_data['result']:
 			item['source'] = 'dmzj'
 			item['title'] = i['name']
-			item['url'] = 'http://manhua.dmzj.com' + i['comic_url']
-			
+			if 'http://manhua.dmzj.com' in i['comic_url']:
+				item['url'] = i['comic_url']
+			else:
+				item['url'] = 'http://manhua.dmzj.com' + i['comic_url']
+			item['js_id'] = i['id']
+			item['update_time'] = i['last_update_date']
+			item['author'] = i['author']
+			item['c_ticai'] = i['type']
 			yield item
 
 

@@ -15,7 +15,7 @@ class MaoyanSpider(scrapy.Spider):
 
 	def start_requests(self):
 		
-		get_info = db.TVInfo.find({'source': 'douban'}).skip(2000)
+		get_info = db.TVInfo.find({'source': 'douban'}).skip(0).limit(2000)
 
 		for i in get_info:
 
@@ -128,6 +128,7 @@ class MaoyanSpider(scrapy.Spider):
 		# print city_data
 		data.update(city_data)
 		data['update_time'] = time.strftime('%Y-%m-%d %H:%M:%S')
+		data['cat_url'] = response.meta['cat_url']
 		db.CatEyeInfo.update({'movie_url': data['movie_url']}, {'$set': data}, True)
 
 

@@ -12,12 +12,11 @@ import re
 
 class AcqqSpider(scrapy.Spider):
 
-
 	name = "acqq_info"
 
 	def start_requests(self):
-
-		mongo_data = db.CartoonSource.find({'source': 'acqq', 'url': '/Comic/comicInfo/id/505430'})
+		
+		mongo_data = db.CartoonSource.find({'source': 'acqq'}).skip(100).limit(10)
 		mongo_data = [i for i in mongo_data]
 		for i in mongo_data:
 			request_url = 'http://ac.qq.com' + i['url']
@@ -25,17 +24,17 @@ class AcqqSpider(scrapy.Spider):
 										request_url, 
 										meta={
 												'name': i['title'],
-
 											}, 
 										dont_filter=True, 
 										callback=self.parse
 									)
-
+	
 
 	def parse(self, response):
 
 		sel = Selector(text=response.body)
 		item = AcqqInfo()
+
 		item['source'] = 'acqq'
 		print u'来源:%s' % item['source']
 
@@ -45,9 +44,8 @@ class AcqqSpider(scrapy.Spider):
 		item['name'] = response.meta['name']
 		print u'名称:%s' % item['name']
 
-		item['scrapy_time'] = time.strftime('%Y-%m-%d %H:%M:%S')
-		print u'抓取时间:%s' % item['scrapy_time']
-
+		item['c_id'] = 'acqq' + item['url'].split('id/')[1].strip()
+		print u'唯一标识:%s' % item['c_id']
 		item['img_url'] = sel.xpath('//*[@class="works-cover ui-left"]/a/img/@src').extract()[0].strip()
 		print u'图片链接:%s' % item['img_url']
 		# item['img_data'] = bson.Binary(urllib2.urlopen(item['img_url']).read())
@@ -55,6 +53,8 @@ class AcqqSpider(scrapy.Spider):
 		item['author'] = sel.xpath('//*[@class="works-author-info ui-left"]//*[@class="works-author-name"]/text()').extract()[0].strip()
 		print u'作者:%s' % item['author']
 
+
+		#每月
 		for i in sel.xpath('//*[@class="works-intro-digi"]/span'):
 
 			is_which = i.xpath('./text()').extract()[0].strip()
@@ -99,6 +99,7 @@ class AcqqSpider(scrapy.Spider):
 		if json_r1:
 			item['month_tickts'] = json_r1['monthTicket']['monthTotal']
 			print u'本月月票:%s' % item['month_tickts']
+			#每天
 			item['today_tickts'] = json_r1['monthTicket']['dayTotal']
 			print u'今日月票:%s' % item['today_tickts']
 			item['rank'] = json_r1['monthTicket']['rank']['rankNo']
@@ -121,6 +122,10 @@ class AcqqSpider(scrapy.Spider):
 		if is_comment:
 			item['all_comments'] = is_comment[0].strip()
 			print u'总评论数:%s' % item['all_comments']
+
+		#更新频率
+		item['scrapy_time'] = time.strftime('%Y-%m-%d %H:%M:%S')
+		print u'抓取时间:%s' % item['scrapy_time']
 
 
 		return item

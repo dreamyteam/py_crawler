@@ -36,7 +36,7 @@ def imdb_human_info(imdb_dict, releate_id):
 	get_dict['source'] = 'IMDB'
 	print u'来源:%s' % get_dict['source']
 	db.PeopleData.update({'human_url': get_dict['human_url']}, {'$set': get_dict}, True)
-
+	
 
 
 # imdb_human_info({'url': 'http://www.imdb.com/name/nm0000553/'})

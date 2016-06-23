@@ -1,14 +1,18 @@
-#-*- coding:utf-8 -*-
+# -*- coding: utf-8 -*-
 
-
+import urllib
 import urllib2
-
-
 from scrapy.selector import Selector
 from config_constant import *
 import json
 
+import sys
+reload(sys)
+sys.setdefaultencoding('utf-8')
+
+
 def maoyan_info(url):
+
 	response = urllib2.urlopen(url)
 	sel = Selector(text=response.read())
 	data = cateye_info()
@@ -17,6 +21,7 @@ def maoyan_info(url):
 	data['all_box_office'] = sel.xpath('//*[@class="tags clearfix"]/span/text()').extract()[0].strip()
 	print u'总票房:%s' % data['all_box_office']
 
+	
 	#日票房信息
 	all_day = sel.xpath('//*[@id="ticketList"]//*[@id="ticket_tbody"]/ul')
 	for i in all_day:
@@ -62,27 +67,45 @@ def city_info(date):
 		print u'人次:%s' % people
 		times = i.xpath('./td[10]/text()').extract()[0].strip()
 		print u'场次:%s' % times
+
 		print '-------------' * 5
 
-
-
-city_info('2016-06-11')
-
-
+# city_info('2016-06-11')
 # maoyan_info('http://piaofang.maoyan.com/movie/78421')
 
+def search_film(name):
+	url = 'http://piaofang.maoyan.com/search?key=%s' % name
+	print u'路径:%s' % url
+	url1 = urllib.urlencode({'ok':'魔兽'})
 
+	# url = 'http://piaofang.maoyan.com/search?key=%E4%B8%96%E7%95%8C%E6%97%A6%E5%A4%95%E4%B9%8B%E9%97%B4'
+	
+	data = urllib2.urlopen(url).read()
+	# print data
+	sel = Selector(text=data)
+	# print sel.xpath('//*[@id="search-list"]/article')
+	for i in sel.xpath('//*[@id="search-list"]/article'):
+		movie_name = i.xpath('.//*[@class="title"]/text()').extract()[0].strip()
+		print u'电影名称:%s' % movie_name
+		date = i.xpath('./text()').extract()[2].strip()
+		print u'时间:%s' % date
+		movie_url = 'http://piaofang.maoyan.com' + i.xpath('./@data-url').extract()[0].strip()
+		print u'电影URL:%s' % movie_url
+		print '---------' * 5
+		
 
+# search_film('魔兽')
+# import pymongo
+# client = pymongo.MongoClient('112.74.106.159', 27017)
+# db = client.TVData
 
+# for i in db.TVInfo.find({'source': 'douban'}).skip(10).limit(1):
+# 	print i['movie_name']
+# 	print i['movie_time']
+	
+# 	search_film(i['movie_name'])
 
-
-
-
-
-
-
-
-
+# 	print '**********' * 5
 
 
 

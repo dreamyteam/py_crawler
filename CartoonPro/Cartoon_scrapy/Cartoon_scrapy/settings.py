@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+
 import pymongo 
 client = pymongo.MongoClient('112.74.106.159', 27017)
 db = client.CartoonData
@@ -17,6 +18,7 @@ dm5_dict = {
 			'status': u'漫画状态：',
 			'update_time': u'更新时间：',
 		}
+
 #动漫之家配置信息
 dmzj_dict = {
 
@@ -33,8 +35,6 @@ u17_dict = {
 				u'类别：': 'c_leibie',
 				u'类型：': 'c_leixing',
 				u'状态：': 'status',
-				# u'总点击：': 'all_click',
-				# u'总月票：': 'all_tickts',
 		}
 
 

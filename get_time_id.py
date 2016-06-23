@@ -18,34 +18,35 @@ def search_movie(search_name, movie_time):
 
 	keywords = ''.join([i['value'] for i in deal_data['value']['words']])
 	print u'检索出来的关键字:%s' % keywords
-
+	
 	#检索和判断
-	for i in deal_data['value']['movieResult']['moreMovies']:
-		print i['movieTitle']
-		is_in_list = list()
-		is_in_other_list = list()
-		for j in keywords:
-			if j in i['movieTitle'].lower():
-				is_in_list.append('ok')
-			else:
-				is_in_list.append('no')
-			if j in i['titleOthers'].lower():
-				is_in_other_list.append('ok')
-			else:
-				is_in_other_list.append('no')
-		norepid_list = list(set(is_in_list))
-		norepid_list_2 = list(set(is_in_other_list))
-		if (len(norepid_list) == 1) and (norepid_list[0] == 'ok') and (str(movie_time) in i['movieTitle']):
-		# movie_title = ''.join(i['movieTitle'].split(' '))
-			return i['movieId']
+	if 'moreMovies' in deal_data['value']['movieResult']:
+		for i in deal_data['value']['movieResult']['moreMovies']:
+			print i['movieTitle']
+			is_in_list = list()
+			is_in_other_list = list()
+			for j in keywords:
+				if j in i['movieTitle'].lower():
+					is_in_list.append('ok')
+				else:
+					is_in_list.append('no')
+				if j in i['titleOthers'].lower():
+					is_in_other_list.append('ok')
+				else:
+					is_in_other_list.append('no')
+			norepid_list = list(set(is_in_list))
+			norepid_list_2 = list(set(is_in_other_list))
+			if (len(norepid_list) == 1) and (norepid_list[0] == 'ok') and (str(movie_time) in i['movieTitle']):
+			# movie_title = ''.join(i['movieTitle'].split(' '))
+				return i['movieId']
 
-		elif (len(norepid_list) != 1) and (str(movie_time) in i['movieTitle']):
-			if (len(norepid_list_2) == 1) and (norepid_list_2[0] == 'ok'):
-				return i['movieId']
-		elif (len(norepid_list) != 1) and (str(movie_time) not in i['movieTitle']):
-			if (len(norepid_list_2) == 1) and (norepid_list_2[0] == 'ok') and (str(movie_time) in i['titleOthers']):
-				return i['movieId']
-		print '\n'
+			elif (len(norepid_list) != 1) and (str(movie_time) in i['movieTitle']):
+				if (len(norepid_list_2) == 1) and (norepid_list_2[0] == 'ok'):
+					return i['movieId']
+			elif (len(norepid_list) != 1) and (str(movie_time) not in i['movieTitle']):
+				if (len(norepid_list_2) == 1) and (norepid_list_2[0] == 'ok') and (str(movie_time) in i['titleOthers']):
+					return i['movieId']
+			print '\n'
 
 	return 'nomatch'
 
@@ -54,15 +55,15 @@ def time_id(movie_dict):
 	name_list = movie_dict['movie_name'].split(' ')
 	# print u'列表:%s' % name_list
 	movie_name = '**'.join(name_list)
-	print movie_name, movie_dict['movie_time']
+	# print movie_name, movie_dict['movie_time']
 	result_first = search_movie(name_list[0].encode('utf-8'), movie_dict['movie_time'])
 	if result_first == 'nomatch':
 		name_list.pop(0)
 		if name_list:
 			new_search_word = '%20'.join(name_list)
-			print u'第二次检索关键词:%s' % new_search_word
+			# print u'第二次检索关键词:%s' % new_search_word
 			result_second = search_movie(new_search_word.encode('utf-8'), movie_dict['movie_time'])
-			print u'第二次返回的时光网ID:%s' % result_second
+			# print u'第二次返回的时光网ID:%s' % result_second
 			if result_second == 'nomatch':
 				return 'nofind'
 				print '检索不到，我去，居然没找到'

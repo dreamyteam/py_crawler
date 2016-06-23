@@ -25,9 +25,9 @@ class MyThread (threading.Thread):
 
     def run(self):
 
-        proxy = urllib2.ProxyHandler(random.choice(proxy_list))
-        opener = urllib2.build_opener(proxy)
-        urllib2.install_opener(opener)
+        # proxy = urllib2.ProxyHandler(random.choice(proxy_list))
+        # opener = urllib2.build_opener(proxy)
+        # urllib2.install_opener(opener)
         response = urllib2.urlopen('https://movie.douban.com/j/search_subjects?type=movie&tag={0}&sort=recommend&page_limit=20&page_start={1}'.format(self.tag, self.num,))
         data = json.loads(response.read())
         movie_dict = dict()

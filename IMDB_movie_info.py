@@ -257,7 +257,7 @@ def cast_info(ttid):
 					# print u'角色:%s' % character
 				actor_charactor.append([actor_dict, character])
 	update_dict['actor_charactor'] = actor_charactor
-
+	
 	return update_dict
 
 # #更新部分
@@ -335,11 +335,11 @@ def update_info(ttid, sel2):
 				# print u'奖项:%s' % name
 				# print u'获奖者:%s' % name_actor
 				format_dict[is_which].append(insert_dict)
-
+				
 		elif len(is_len) == 2:
 			# print u'有执行么'
 			format_dict['award_category'] = sel.xpath('//*[@class="article listo"]/table[{0}]//*[@class="award_category"]/text()'.format(i,)).extract()[0].strip()
-
+			
 			rowspan_list = list()
 			for j in sel.xpath('//*[@class="article listo"]/table[{0}]//*[@class="title_award_outcome"]'.format(i,)):
 				rowspan_list.append(j.xpath('./@rowspan').extract()[0].strip())
@@ -351,7 +351,7 @@ def update_info(ttid, sel2):
 			# print is_which2
 			#第一项
 			for x in range(1, int(rowspan_list[0]) + 1):
-
+				
 				name = sel.xpath('//*[@class="article listo"]/table[{0}]//*[@class="award_description"][{1}]/text()'.format(i, x)).extract()[0].strip()
 				# print u'第一项名称:%s' % name
 				name_actor_list = sel.xpath('//*[@class="article listo"]/table[{0}]//*[@class="award_description"][{1}]/a'.format(i, x))
@@ -365,7 +365,6 @@ def update_info(ttid, sel2):
 									'name_actor': name_actor
 								}
 					format_dict[is_which1].append(insert_dict)	
-
 
 			#第二项
 			for x in range(int(rowspan_list[0]) + 1, int(rowspan_list[0]) + 1 + int(rowspan_list[1])):
@@ -383,16 +382,22 @@ def update_info(ttid, sel2):
 					format_dict[is_which2].append(insert_dict)
 		award_nominate.append(format_dict)
 	update_dict['award_nominate'] = award_nominate
-
-	average = sel2.xpath('//*[@itemprop="ratingValue"]/text()').extract()[0].strip()
+	if sel2.xpath('//*[@itemprop="ratingValue"]/text()').extract():	
+		average = sel2.xpath('//*[@itemprop="ratingValue"]/text()').extract()[0].strip()
+	else:
+		average = ''
 	# print u'IMDB评分:%s' % average
 	update_dict['average'] = average
-	votes = sel2.xpath('//*[@itemprop="ratingCount"]/text()').extract()[0].strip()
-	
-	p = re.compile("\d+,\d+?")
-	for com in p.finditer(votes):
-		mm = com.group()
-		votes = int(votes.replace(mm, mm.replace(",", "")))
+	if sel2.xpath('//*[@itemprop="ratingCount"]/text()').extract():
+		votes = sel2.xpath('//*[@itemprop="ratingCount"]/text()').extract()[0].strip()
+		
+		p = re.compile("\d+,\d+?")
+		for com in p.finditer(votes):
+			mm = com.group()
+			votes = votes.replace(mm, mm.replace(",", ""))
+		votes = int(votes)
+	else:
+		votes = 0
 	update_dict['votes'] = votes
 	# print u'人数:%s' % votes
 	all_long = sel2.xpath('//*[@href="externalreviews?ref_=tt_ov_rt"]/text()').extract()
@@ -404,7 +409,6 @@ def update_info(ttid, sel2):
 		all_long = 0
 	# print u'长评人数:%s' % all_long
 	
-
 	update_dict['all_long'] = all_long
 	rank_list = sel2.xpath('//*[@class="titleReviewBarSubItem"]')
 	rank = 0
@@ -416,16 +420,19 @@ def update_info(ttid, sel2):
 					p = re.compile("\d+,\d+?")
 					for com in p.finditer(rank):
 						mm = com.group()
-						rank = int(rank.replace(mm, mm.replace(",", "")))
+						rank = rank.replace(mm, mm.replace(",", ""))
+					rank = int(rank)
 					# print u'排名:%s' % rank
 
 	update_dict['rank'] = rank
 	update_dict['all_short'] = 0
 	return update_dict
 
-get_douban_info = db.MovieInfo.find({'source': 'douban'}).limit(10)
-
+get_douban_info = db.MovieInfo.find({'source': 'douban'}).skip(1639).limit(61)
+count_index = 0
 for i in get_douban_info:
+	count_index += 1
+	print u'第几个:%s' % count_index
 	if i['IMDB_ID']:
 		imdb_info(i['IMDB_ID'], i['Relate_ID'])
 	print '-------' * 5

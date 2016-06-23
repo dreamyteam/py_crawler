@@ -6,7 +6,6 @@ sys.setdefaultencoding('utf-8')
 
 
 
-
 #标签分类
 tag_list = [
 			u'热门', u'最新', u'经典', u'可播放', u'豆瓣高分', u'冷门佳片', 
@@ -224,7 +223,7 @@ def human_info_format():
 	data['Releate_ID'] = str()
 	return data
 
-#时光网任务基本信息对照表
+#时光网人物基本信息对照表
 
 time_human_info_dict = {
 							'birth': u'出生日期：',
@@ -234,7 +233,6 @@ time_human_info_dict = {
 							'cn_name_other': u'更多中文名：',
 							'blood_type': u'血型：',
 					}
-
 
 #猫眼票房数据存储格式
 def cateye_info():
@@ -262,7 +260,7 @@ def cateye_info():
 	data['city_percent'] = list()
 	#城市累计票房
 	data['city_total_box_office'] = list()
-	
+
 	'''自加字段'''
 	#电影猫眼URL
 	data['url'] = str()
@@ -270,12 +268,6 @@ def cateye_info():
 	data['name'] = str()
 
 	return data
-
-
-
-
-
-
 
 
 

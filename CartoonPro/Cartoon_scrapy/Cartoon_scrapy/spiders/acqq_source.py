@@ -6,6 +6,7 @@ from Cartoon_scrapy.items import CartoonSourceItem
 
 
 class AcQQSpider(scrapy.Spider):
+	
 	name = "QQ"
 	start_urls = (
 					'http://ac.qq.com/Comic/all/search/time/page/1', 

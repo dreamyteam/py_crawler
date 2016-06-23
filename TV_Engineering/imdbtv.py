@@ -82,7 +82,7 @@ class ImdbTV(object):
 			print u'图片链接:%s' % self.info_dict['img_url']
 
 			#图片二进制流
-			self.info_dict['img_data'] = bson.Binary(urllib2.urlopen(self.info_dict['img_url']).read()) 
+			# self.info_dict['img_data'] = bson.Binary(urllib2.urlopen(self.info_dict['img_url']).read()) 
 
 		#1影片名称 2外文名称
 		self.info_dict['movie_name'] = sel.xpath('//*[@class="title_wrapper"]//*[@itemprop="name"]/text()').extract()[0].strip()
@@ -390,7 +390,6 @@ class ImdbTV(object):
 		if sel2.xpath('//*[@itemprop="ratingCount"]/text()').extract():
 
 			votes = sel2.xpath('//*[@itemprop="ratingCount"]/text()').extract()[0].strip()
-			
 			p = re.compile("\d+,\d+?")
 			for com in p.finditer(votes):
 				mm = com.group()
@@ -430,11 +429,12 @@ class ImdbTV(object):
 def run_threads():
 
 	count = 0
-	data = db.TVInfo.find({'source': 'douban'}).skip(2710).limit(290)
+	data = db.TVInfo.find({'source': 'douban'}).skip(10001).limit(200)
 	data_list = [i for i in data]
 	for i in data_list:
 		count += 1
 		print u'第几个:%s' % count
+		print u'IMDB编号:%s' % i['IMDB_ID']
 		if i['IMDB_ID']:
 			ImdbTV(i, 'first').run()
 

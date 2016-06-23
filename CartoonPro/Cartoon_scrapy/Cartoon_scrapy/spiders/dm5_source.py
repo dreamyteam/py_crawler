@@ -20,11 +20,11 @@ class Dm5SourceSpider(scrapy.Spider):
 		position = len(sel.xpath('//*[@id="search_fy"]/a')) - 1
 		all_pages = int(sel.xpath('//*[@id="search_fy"]/a[{0}]/text()'.format(position,)).extract()[0].strip())
 		print u'总页数:%s' % all_pages
-
+		
 		for i in range(1, all_pages + 1):
 			request_url = now_url.split('-p')[0] + '-p{0}/'.format(i,)
 			yield scrapy.FormRequest(request_url, dont_filter=True, callback=self.get_tags)
-
+			
 
 	def get_tags(self, response):
 		item = CartoonSourceItem()

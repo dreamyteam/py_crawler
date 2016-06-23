@@ -7,7 +7,7 @@ from scrapy.selector import Selector
 
 client = pymongo.MongoClient('112.74.106.159', 27017)
 db = client.MovieData
-get_info = db.MovieInfo.find().skip(0).limit(500)
+get_info = db.MovieInfo.find().skip(831).limit(100)
 
 from config_constant import *
 from get_time_id import *
@@ -296,7 +296,7 @@ def movie_info(url, relate_id, time_get_id, imdb_id):
 
 	#其余更新部分
 	time_movie_info.update(update_other_info(time_get_id))
-	db.TimeTestData.update({'movie_url': url}, {'$set': time_movie_info}, True)
+	db.MovieInfo.update({'movie_url': url}, {'$set': time_movie_info}, True)
 
 #获奖和提名记录还有次数属于更新
 def awards_record(sel5):
@@ -339,7 +339,11 @@ def awards_record(sel5):
 
 				for dd in range(1, won_times + 1):
 
-					award_name = i.xpath('./dl/dd[{0}]/span/text()'.format(dd)).extract()[0].strip()
+					award_name = i.xpath('./dl/dd[{0}]/span/text()'.format(dd)).extract()
+					if award_name:
+						award_name = i.xpath('./dl/dd[{0}]/span/text()'.format(dd)).extract()[0].strip()
+					else:
+						award_name = str()
 					insert_dict['award_name'] = award_name
 					# print u'获奖类型:%s' % insert_dict['award_name']
 					for na in i.xpath('./dl/dd[{0}]/a'.format(dd)):
@@ -350,7 +354,10 @@ def awards_record(sel5):
 
 				for dd1 in range(won_times + 1, won_times + 1 + nominated_times):
 					# print u'dd1的值:%s' % dd1
-					award_name = i.xpath('./dl/dd[{0}]/span/text()'.format(dd1)).extract()[0].strip()
+					if i.xpath('./dl/dd[{0}]/span/text()'.format(dd1)).extract():
+						award_name = i.xpath('./dl/dd[{0}]/span/text()'.format(dd1)).extract()[0].strip()
+					else:
+						award_name = str()
 					insert_dict['award_name'] = award_name
 					# print u'提名项:%s' % insert_dict['award_name']
 
@@ -461,9 +468,12 @@ def update_other_info(time_get_id):
 	else:
 		new_comment_url = 'http://movie.mtime.com/{0}/reviews/short/hot.html'.format(time_get_id,)
 		sel = Selector(text=urllib2.urlopen(new_comment_url).read())
-		long_comment = sel.xpath('//*[@class="details_nav"]/ul/li[1]/a/text()').extract()[0].strip().split('(')[1].split(')')[0].strip()
-		short_comment = sel.xpath('//*[@class="details_nav"]/ul/li[2]/a/text()').extract()[0].strip().split('(')[1].split(')')[0].strip()
-	
+		if sel.xpath('//*[@class="details_nav"]/ul/li[1]/a/text()').extract():
+			long_comment = sel.xpath('//*[@class="details_nav"]/ul/li[1]/a/text()').extract()[0].strip().split('(')[1].split(')')[0].strip()
+			short_comment = sel.xpath('//*[@class="details_nav"]/ul/li[2]/a/text()').extract()[0].strip().split('(')[1].split(')')[0].strip()
+		else:
+			long_comment = str()
+			short_comment = str()
 	# print u'长影评:%s' % long_comment
 	# print u'短影评:%s' % short_comment
 	news_url = 'http://movie.mtime.com/{0}/'.format(time_get_id,)
@@ -474,16 +484,18 @@ def update_other_info(time_get_id):
 	update_dict['all_short'] = short_comment
 	update_dict['all_news'] = news_times
 	return update_dict
+	
 #时光网单测
-# movie_info('http://movie.mtime.com/215403/', '123', 215403, '111')
+# movie_info('http://movie.mtime.com/228521/', '123', 228521, '111')
 # for i in movie_url_list:
 # 	movie_info(i, '123')
 # 	print '********' * 5 
 
+
 #从豆瓣到时光网
 count = 0
 for i in get_info:
-	time.sleep(1)
+	time.sleep(2)
 	count += 1
 	print u'第几个:%s' % count
 	get_id = time_id(i)
@@ -492,10 +504,10 @@ for i in get_info:
 		url = 'http://movie.mtime.com/{0}/'.format(get_id)
 		print u'时光网的URL:%s' % url
 		movie_info(url, i['Relate_ID'], get_id, i['IMDB_ID'])
-
+		# break
 # 	print '------' * 5
 
-	# break
+
 
 
 
